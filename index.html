@@ -1025,6 +1025,8 @@ function startMatch(matchId){
   fbPushMatchState();
   // listen for coach actions and chat
   fbListenMatch(STATE.match.matchId);
+  // admin: start listening chat for this match
+  fbListenChatOnly(STATE.match.matchId);
   toast('Partida carregada! Pressione Iniciar.','⚽');
 }
 
@@ -2168,13 +2170,12 @@ function fbPushEvent(ev){
   push(ref(window._db,'matches/'+STATE.match.matchId+'/events'), {...ev,ts:Date.now()}).catch(()=>{});
 }
 
-// Push chat message
+// Push chat message (system messages only — user messages handled by sendChat)
 function fbPushChat(msg){
   const matchId=STATE.match?.matchId||MATCH_ID;
   if(!matchId) return;
   if(!window._fbReady){
-    // local fallback
-    addChatMessage(msg);
+    addChatMessageLocal(msg);
     return;
   }
   const {ref,push}=window._fb;
@@ -2478,12 +2479,12 @@ function confirmName(){
 function startChat(){
   renderChatWidget();
   addChatMessageLocal({ system: true, text: `Bem-vindo, ${CHAT_USER.name}! 👋` });
-  if(!window._fbReady){
+  // Sempre escuta o chat do matchId da URL (espectador/técnico) ou da partida atual (admin)
+  const chatMatchId = MATCH_ID || STATE.match?.matchId;
+  if(chatMatchId && window._fbReady){
+    fbListenChatOnly(chatMatchId);
+  } else if(!window._fbReady){
     addChatMessageLocal({ system: true, text: '⚠️ Firebase não configurado — chat só local.' });
-  }
-  // Admin: also listen for chat on current match
-  if(ROLE==='admin' && STATE.match){
-    fbListenChatOnly(STATE.match.matchId);
   }
 }
 
@@ -2500,8 +2501,6 @@ function fbListenChatOnly(matchId){
         if(msg.system){
           addChatMessageLocal({system:true,text:msg.text});
         } else {
-          // Don't re-add own messages
-          if(msg.name===CHAT_USER?.name && msg.ts && Date.now()-msg.ts<3000) return;
           addChatMessageLocal({name:msg.name,role:msg.role,text:msg.text,time:msg.ts?new Date(msg.ts):new Date()});
         }
       }
@@ -2537,9 +2536,16 @@ function sendChat(){
   if(!text) return;
   inp.value='';
   const msg = { name: CHAT_USER.name, role: CHAT_USER.role, text, ts: Date.now() };
-  fbPushChat(msg);
-  // local fallback if no firebase
-  if(!window._fbReady) addChatMessage(msg);
+  // sempre mostra localmente imediatamente
+  addChatMessageLocal({...msg, time: new Date()});
+  // push para Firebase (outros vão receber)
+  if(window._fbReady){
+    const matchId = MATCH_ID || STATE.match?.matchId;
+    if(matchId){
+      const {ref,push}=window._fb;
+      push(ref(window._db,'matches/'+matchId+'/chat'), msg).catch(()=>{});
+    }
+  }
 }
 
 function addChatMessage(msg){ addChatMessageLocal(msg); }
