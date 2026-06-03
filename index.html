@@ -996,6 +996,16 @@ function startMatch(matchId){
   b.rounds.forEach(r=>r.matches.forEach(x=>{if(x.id===matchId)m=x;}));
   if(!m||!m.home||!m.away)return;
 
+  // ── RESET COMPLETO ──
+  clearInterval(matchRuntime.tickInterval);
+  // unsubscribe Firebase listeners anteriores
+  if(window._fbMatchUnsub){try{window._fbMatchUnsub();}catch(e){} window._fbMatchUnsub=null;}
+  if(window._fbChatUnsub){try{window._fbChatUnsub();}catch(e){} window._fbChatUnsub=null;}
+  if(window._fbActionsUnsub){try{window._fbActionsUnsub();}catch(e){} window._fbActionsUnsub=null;}
+  window._chatListening=false;
+  window._processedActions=new Set();
+  window._coachSide=null;
+
   STATE.match={
     matchId,
     home:deep(m.home),away:deep(m.away),
@@ -1004,32 +1014,38 @@ function startMatch(matchId){
     events:[],
     stats:{home:{shots:0,shotsOT:0,fouls:0,corners:0,yellow:0,red:0,possession:50},
            away:{shots:0,shotsOT:0,fouls:0,corners:0,yellow:0,red:0,possession:50}},
-    phase:"pre",minute:0,
+    phase:'pre',minute:0,
     subs:{home:5,away:5},
-    tactics:{home:{pressure:50,defensive:false,longball:false,press:false},
-             away:{pressure:50,defensive:false,longball:false,press:false}},
+    tactics:{
+      home:{pressure:50,defensive:false,longball:false,press:false,highline:false,counterattack:false,possession:false,aggressive:false},
+      away:{pressure:50,defensive:false,longball:false,press:false,highline:false,counterattack:false,possession:false,aggressive:false}
+    },
     playerOrders:{},
     penalties:null,
   };
-  matchRuntime={running:false,tickInterval:null,speed:parseInt($('speed-sel').value)||220,phase:"pre",minute:0};
+  matchRuntime={running:false,tickInterval:null,speed:parseInt($('speed-sel').value)||220,phase:'pre',minute:0};
 
   goPage('match');
   $('match-empty').style.display='none';
   $('match-ui').style.display='block';
-  // clear feed from previous match
+  $('btn-start').disabled=false;
+  $('btn-pause').disabled=true;
+  $('ht-banner').style.display='none';
+  $('et-banner').style.display='none';
+
+  // clear feed
   const feedEl=$('feed'); if(feedEl) feedEl.innerHTML='';
+
   updateMatchUI();
   addFeedEvent({min:0,type:'normal',icon:'📋',text:`<b>${m.home.name}</b> vs <b>${m.away.name}</b> — Partida prestes a começar!`});
   renderBracket();
-  // push match state + start sync
+
+  // Firebase sync
   fbPushMatchState();
-  // listen for coach actions and chat
   fbListenMatch(STATE.match.matchId);
-  // admin: escuta chat UMA VEZ
-  if(!window._chatListening){
-    window._chatListening=true;
-    fbListenChatOnly(STATE.match.matchId);
-  }
+  window._chatListening=true;
+  fbListenChatOnly(STATE.match.matchId);
+
   toast('Partida carregada! Pressione Iniciar.','⚽');
 }
 
@@ -1940,7 +1956,12 @@ function enterSpectatorMode(){
   goPage('spectator');
   const sf=$('spec-feed');
   if(sf) sf.innerHTML='<div class="text-dim text-center" style="padding:20px;font-size:.9rem;">📡 Conectando ao vivo...</div>';
-  fbListenMatch(MATCH_ID);
+  // Aguarda Firebase estar pronto antes de escutar
+  if(window._fbReady){
+    fbListenMatch(MATCH_ID);
+  } else {
+    window.addEventListener('fb-ready', ()=>fbListenMatch(MATCH_ID), {once:true});
+  }
 }
 function enterCoachMode(side){
   document.querySelectorAll('.nav-btn').forEach(b=>b.style.display='none');
@@ -1949,7 +1970,12 @@ function enterCoachMode(side){
   $('coach-page-title').textContent=side==='home'?'TÉCNICO — CASA':'TÉCNICO — VISITANTE';
   $('coach-page-sub').textContent=side==='home'?'Gerencie o Time da Casa':'Gerencie o Time Visitante';
   renderCoachPanel(side);
-  fbListenMatch(MATCH_ID);
+  // Aguarda Firebase estar pronto
+  if(window._fbReady){
+    fbListenMatch(MATCH_ID);
+  } else {
+    window.addEventListener('fb-ready', ()=>fbListenMatch(MATCH_ID), {once:true});
+  }
 }
 
 // Tactic definitions: key, label, icon, desc, effect function
@@ -2210,11 +2236,8 @@ function fbPushCoachAction(action){
 function fbListenMatch(matchId){
   if(!matchId){ toast('ID da partida inválido','⚠️'); return; }
   if(!window._fbReady){
-    // No Firebase — show helpful message
-    const sf=$('spec-feed');
-    if(sf) sf.innerHTML='<div style="padding:20px;text-align:center;color:var(--dim);font-size:.85rem;">⚠️ Firebase não configurado.<br>Configure o Firebase no código para ver ao vivo.</div>';
-    const cf=$('coach-feed');
-    if(cf) cf.innerHTML='<div style="padding:20px;text-align:center;color:var(--dim);font-size:.85rem;">⚠️ Firebase não configurado.<br>Configure o Firebase para ver a narração.</div>';
+    // Firebase not ready yet — retry after event
+    window.addEventListener('fb-ready', ()=>fbListenMatch(matchId), {once:true});
     return;
   }
   const {ref,onValue}=window._fb;
@@ -2486,18 +2509,22 @@ function confirmName(){
 function startChat(){
   renderChatWidget();
   addChatMessageLocal({ system: true, text: `Bem-vindo, ${CHAT_USER.name}! 👋` });
-  if(!window._fbReady){
-    addChatMessageLocal({ system: true, text: '⚠️ Firebase não configurado — chat só local.' });
-    return;
+  // Espectador/Técnico: escuta chat pelo MATCH_ID da URL
+  if(MATCH_ID){
+    const doListen = ()=>{
+      if(window._fbReady){
+        fbListenChatOnly(MATCH_ID);
+        window._chatListening=true;
+      } else {
+        window.addEventListener('fb-ready', ()=>{
+          fbListenChatOnly(MATCH_ID);
+          window._chatListening=true;
+        }, {once:true});
+      }
+    };
+    doListen();
   }
-  // Escuta chat: técnico/espectador usam MATCH_ID da URL
-  // Admin escuta quando a partida começar (fbListenMatch já chama fbListenChatOnly)
-  const chatMatchId = MATCH_ID; // só para quem entrou por link
-  if(chatMatchId){
-    fbListenChatOnly(chatMatchId);
-    window._chatListening=true;
-  }
-  // admin sem partida ainda: vai escutar quando startMatch() for chamado
+  // Admin: vai escutar quando startMatch() for chamado
 }
 
 function fbListenChatOnly(matchId){
