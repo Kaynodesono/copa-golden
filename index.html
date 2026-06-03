@@ -1025,8 +1025,11 @@ function startMatch(matchId){
   fbPushMatchState();
   // listen for coach actions and chat
   fbListenMatch(STATE.match.matchId);
-  // admin: start listening chat for this match
-  fbListenChatOnly(STATE.match.matchId);
+  // admin: escuta chat UMA VEZ
+  if(!window._chatListening){
+    window._chatListening=true;
+    fbListenChatOnly(STATE.match.matchId);
+  }
   toast('Partida carregada! Pressione Iniciar.','⚽');
 }
 
@@ -1839,7 +1842,8 @@ function scorePop(){
 // ── SUBSTITUTION ──
 let subModalSide=null;let subOutSel=null;let subInSel=null;
 function openSubModal(side){
-  const M=STATE.match;if(!M)return;
+  const M=STATE.match;
+  if(!M){toast('Aguardando dados da partida...','⏳');return;}
   const subs=M.subs[side];
   if(subs<=0){toast('Sem substituições restantes!','⚠️');return;}
   subModalSide=side;subOutSel=null;subInSel=null;
@@ -1969,14 +1973,17 @@ const TACTICS_DEF = [
 ];
 
 function renderCoachPanel(side){
-  // Sub section
+  // store side globally for updates
+  window._coachSide = side;
+
+  // Sub section — always render buttons
   const subSec=$('coach-sub-section');
   if(subSec) subSec.innerHTML=`
     <div style="font-size:.82rem;color:var(--dim);margin-bottom:10px;">Escolha quem sai e quem entra.</div>
     <button class="btn btn-gold btn-full" onclick="openSubModal('${side}')">🔄 Fazer Substituição</button>
-    <div style="font-size:.75rem;color:var(--dim);margin-top:8px;text-align:center;" id="coach-subs-display">—</div>`;
+    <div style="font-size:.75rem;color:var(--dim);margin-top:8px;text-align:center;" id="coach-subs-display">Aguardando partida...</div>`;
 
-  // Team orders
+  // Team orders — always render buttons
   const orders=$('coach-team-orders');
   if(orders){
     orders.innerHTML=`<div style="font-size:.78rem;color:var(--dim);margin-bottom:8px;">Tática ativa: <b id="coach-active-tactic" style="color:var(--gold)">Jogo equilibrado</b></div>`
@@ -1990,10 +1997,18 @@ function renderCoachPanel(side){
       </button>`).join('');
   }
 
+  // Escalação placeholder
+  const lu=$('coach-lineup');
+  if(lu) lu.innerHTML='<div class="text-dim" style="font-size:.85rem;padding:8px;">Aguardando partida iniciar...</div>';
+
+  // Scoreboard placeholder
+  const mini=$('coach-scoreboard-mini');
+  if(mini) mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);font-size:.9rem;">⏳ Aguardando partida...</div>';
+
   // Start refresh loop
   if(window._coachInterval) clearInterval(window._coachInterval);
   updateCoachPanel(side);
-  window._coachInterval = setInterval(()=>updateCoachPanel(side), 1000);
+  window._coachInterval = setInterval(()=>updateCoachPanel(side), 1500);
 }
 
 function updateCoachPanel(side){
@@ -2212,44 +2227,29 @@ function fbListenMatch(matchId){
     applyRemoteMatchState(data);
   });
 
-  // Listen to events (feed)
+  // Listen to events (feed) — using a Set to avoid duplicates
   if(_fbChatUnsub) _fbChatUnsub();
-  _lastRenderedEventCount=0;
+  let _renderedEventKeys=new Set();
   _fbChatUnsub = onValue(ref(window._db,'matches/'+matchId+'/events'), snap=>{
     const data=snap.val();
     if(!data) return;
-    const evs=Object.values(data).sort((a,b)=>(a.ts||0)-(b.ts||0));
-    // render new events only
+    const evs=Object.entries(data).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0));
     const feeds=[document.getElementById('spec-feed'),document.getElementById('coach-feed')];
+    // clear placeholder text on first event
     feeds.forEach(f=>{
-      if(!f) return;
-      if(f.children.length===0) f.innerHTML='';
+      if(f && f.children.length<=1 && f.innerHTML.includes('Conectando')){
+        f.innerHTML='';
+      }
     });
-    evs.forEach((ev,i)=>{
-      if(i>=_lastRenderedEventCount){
+    evs.forEach(([key,ev])=>{
+      if(!_renderedEventKeys.has(key)){
+        _renderedEventKeys.add(key);
         feeds.forEach(f=>{ if(f) renderFeedItem(f,ev); });
       }
     });
-    _lastRenderedEventCount=evs.length;
   });
 
-  // Listen to chat
-  let _chatRendered=new Set();
-  onValue(ref(window._db,'matches/'+matchId+'/chat'), snap=>{
-    const data=snap.val();
-    if(!data) return;
-    const msgs=Object.entries(data).sort((a,b)=>(a[1].ts||0)-(b[1].ts||0));
-    msgs.forEach(([key,msg])=>{
-      if(!_chatRendered.has(key)){
-        _chatRendered.add(key);
-        if(msg.system){
-          addChatMessageLocal({system:true,text:msg.text});
-        } else {
-          addChatMessageLocal({name:msg.name,role:msg.role,text:msg.text,time:msg.ts?new Date(msg.ts):new Date()});
-        }
-      }
-    });
-  });
+  // Chat is handled separately by fbListenChatOnly — not duplicated here
 
   // Listen to coach actions (admin only)
   if(ROLE==='admin'){
@@ -2350,6 +2350,13 @@ function applyRemoteMatchState(data){
       players:{starters:data.awayStarters||[],reserves:data.awayReserves||[]}};
     matchRuntime.phase=data.phase||'pre';
     matchRuntime.minute=data.minute||0;
+    // atualiza painel do técnico com dados recebidos
+    if(window._coachSide) updateCoachPanel(window._coachSide);
+    // garante que chat está escutando
+    if(!window._chatListening && window._fbReady){
+      window._chatListening=true;
+      fbListenChatOnly(data.matchId);
+    }
   }
 }
 
@@ -2479,13 +2486,18 @@ function confirmName(){
 function startChat(){
   renderChatWidget();
   addChatMessageLocal({ system: true, text: `Bem-vindo, ${CHAT_USER.name}! 👋` });
-  // Sempre escuta o chat do matchId da URL (espectador/técnico) ou da partida atual (admin)
-  const chatMatchId = MATCH_ID || STATE.match?.matchId;
-  if(chatMatchId && window._fbReady){
-    fbListenChatOnly(chatMatchId);
-  } else if(!window._fbReady){
+  if(!window._fbReady){
     addChatMessageLocal({ system: true, text: '⚠️ Firebase não configurado — chat só local.' });
+    return;
   }
+  // Escuta chat: técnico/espectador usam MATCH_ID da URL
+  // Admin escuta quando a partida começar (fbListenMatch já chama fbListenChatOnly)
+  const chatMatchId = MATCH_ID; // só para quem entrou por link
+  if(chatMatchId){
+    fbListenChatOnly(chatMatchId);
+    window._chatListening=true;
+  }
+  // admin sem partida ainda: vai escutar quando startMatch() for chamado
 }
 
 function fbListenChatOnly(matchId){
@@ -2536,15 +2548,19 @@ function sendChat(){
   if(!text) return;
   inp.value='';
   const msg = { name: CHAT_USER.name, role: CHAT_USER.role, text, ts: Date.now() };
-  // sempre mostra localmente imediatamente
-  addChatMessageLocal({...msg, time: new Date()});
-  // push para Firebase (outros vão receber)
   if(window._fbReady){
     const matchId = MATCH_ID || STATE.match?.matchId;
     if(matchId){
+      // Firebase listener vai mostrar pra todo mundo incluindo quem mandou
       const {ref,push}=window._fb;
       push(ref(window._db,'matches/'+matchId+'/chat'), msg).catch(()=>{});
+    } else {
+      // sem matchId, mostra só local
+      addChatMessageLocal({...msg, time: new Date()});
     }
+  } else {
+    // sem Firebase, mostra local
+    addChatMessageLocal({...msg, time: new Date()});
   }
 }
 
