@@ -1999,129 +1999,146 @@ const TACTICS_DEF = [
 ];
 
 function renderCoachPanel(side){
-  // store side globally for updates
   window._coachSide = side;
 
-  // Sub section — always render buttons
+  // ── Substituição ──
   const subSec=$('coach-sub-section');
   if(subSec) subSec.innerHTML=`
     <div style="font-size:.82rem;color:var(--dim);margin-bottom:10px;">Escolha quem sai e quem entra.</div>
     <button class="btn btn-gold btn-full" onclick="openSubModal('${side}')">🔄 Fazer Substituição</button>
     <div style="font-size:.75rem;color:var(--dim);margin-top:8px;text-align:center;" id="coach-subs-display">Aguardando partida...</div>`;
 
-  // Team orders — always render buttons
+  // ── Ordens Táticas — renderiza AGORA com botões funcionais ──
   const orders=$('coach-team-orders');
   if(orders){
-    orders.innerHTML=`<div style="font-size:.78rem;color:var(--dim);margin-bottom:8px;">Tática ativa: <b id="coach-active-tactic" style="color:var(--gold)">Jogo equilibrado</b></div>`
-    +TACTICS_DEF.map(t=>`
-      <button class="tactic-btn" id="tbtn-${t.key}" onclick="coachOrder('${side}','${t.key}')">
-        <span style="font-size:1rem;">${t.icon}</span>
-        <span style="flex:1;">
-          <span style="font-weight:700;">${t.label}</span>
-          <span style="display:block;font-size:.72rem;color:var(--dim);margin-top:1px;">${t.desc}</span>
-        </span>
-      </button>`).join('');
+    orders.innerHTML=
+      `<div style="font-size:.78rem;color:var(--dim);margin-bottom:10px;">
+         Tática ativa: <b id="coach-active-tactic" style="color:var(--gold);">Jogo equilibrado</b>
+       </div>` +
+      TACTICS_DEF.map(t=>`
+        <button class="tactic-btn" id="tbtn-${t.key}" onclick="coachOrder('${side}','${t.key}')">
+          <span style="font-size:1.1rem;flex-shrink:0;">${t.icon}</span>
+          <span style="flex:1;text-align:left;">
+            <span style="font-weight:700;display:block;">${t.label}</span>
+            <span style="font-size:.72rem;color:var(--dim);">${t.desc}</span>
+          </span>
+        </button>`).join('');
   }
 
-  // Escalação placeholder
+  // ── Escalação placeholder ──
   const lu=$('coach-lineup');
-  if(lu) lu.innerHTML='<div class="text-dim" style="font-size:.85rem;padding:8px;">Aguardando partida iniciar...</div>';
+  if(lu) lu.innerHTML='<div style="color:var(--dim);font-size:.85rem;padding:8px;">⏳ Aguardando partida...</div>';
 
-  // Scoreboard placeholder
+  // ── Scoreboard placeholder ──
   const mini=$('coach-scoreboard-mini');
-  if(mini) mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);font-size:.9rem;">⏳ Aguardando partida...</div>';
+  if(mini) mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);">⏳ Aguardando partida...</div>';
 
-  // Start refresh loop
+  // ── Inicia loop de atualização ──
   if(window._coachInterval) clearInterval(window._coachInterval);
-  updateCoachPanel(side);
-  window._coachInterval = setInterval(()=>updateCoachPanel(side), 1500);
+  window._coachInterval = setInterval(()=>refreshCoach(side), 1000);
 }
 
-function updateCoachPanel(side){
-  const M=STATE.match;
+// Chamado a cada 1s E sempre que Firebase traz dados novos
+function refreshCoach(side){
+  const M = STATE.match;
+  const mini = $('coach-scoreboard-mini');
+  const lu   = $('coach-lineup');
+  const subsD= $('coach-subs-display');
+  const subsL= $('coach-subs-left');
+  const statsEl=$('coach-stats');
+  const cf   = $('coach-feed');
 
-  // ── mini scoreboard ──
-  const mini=$('coach-scoreboard-mini');
+  // ── Scoreboard ──
   if(mini){
     if(!M){
-      mini.innerHTML=`<div class="card" style="text-align:center;padding:14px;color:var(--dim);font-size:.9rem;">⏳ Aguardando partida iniciar...</div>`;
+      mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);">⏳ Aguardando partida...</div>';
     } else {
-      const phLabels={pre:'Pré-Jogo',first:'1º Tempo',ht:'Intervalo',second:'2º Tempo',et1:'Prorrogação',et2:'Prorrogação',pen:'Pênaltis',ft:'Encerrado'};
-      const phCls={pre:'s-pre',first:'s-live',ht:'s-ht',second:'s-live',et1:'s-et',et2:'s-et',pen:'s-pen',ft:'s-ft'};
+      const phL={pre:'PRÉ-JOGO',first:'1º TEMPO',ht:'INTERVALO',second:'2º TEMPO',et1:'PRORROGAÇÃO',et2:'PRORROGAÇÃO',pen:'PÊNALTIS',ft:'ENCERRADO'};
+      const phC={pre:'s-pre',first:'s-live',ht:'s-ht',second:'s-live',et1:'s-et',et2:'s-et',pen:'s-pen',ft:'s-ft'};
       mini.innerHTML=`
-        <div style="background:linear-gradient(135deg,var(--black2),var(--card2));border:1px solid var(--border2);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div style="flex:1;text-align:center;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.home.name}</div>
-          </div>
+        <div style="background:linear-gradient(135deg,var(--black2),var(--card2));border:1px solid var(--border2);
+          border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+          <div style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.home.name}</div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span class="status-pill ${phCls[matchRuntime.phase]||'s-pre'}">${phLabels[matchRuntime.phase]||''}</span>
-            <div style="font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:#fff;letter-spacing:6px;">${M.homeScore} — ${M.awayScore}</div>
+            <span class="status-pill ${phC[M.phase]||'s-pre'}">${phL[M.phase]||'PRÉ-JOGO'}</span>
+            <div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:#fff;letter-spacing:6px;">${M.homeScore} — ${M.awayScore}</div>
             <div style="font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--gold);">${M.minute||0}'</div>
           </div>
-          <div style="flex:1;text-align:center;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.away.name}</div>
-          </div>
+          <div style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.away.name}</div>
         </div>`;
     }
   }
 
   if(!M) return;
 
-  // ── subs left ──
-  const subsLeft=M.subs[side];
-  const subsDisp=$('coach-subs-display');
-  if(subsDisp) subsDisp.textContent=subsLeft+' substituição(ões) restante(s)';
-  const subsEl=$('coach-subs-left');
-  if(subsEl) subsEl.textContent=subsLeft;
+  // ── Substituições restantes ──
+  const subsLeft = M.subs[side]||0;
+  if(subsD) subsD.textContent = subsLeft+' substituição(ões) restante(s)';
+  if(subsL) subsL.textContent = subsLeft;
 
-  // ── active tactic highlight ──
-  const t=M.tactics[side];
-  const activeKey=Object.keys(t).find(k=>k!=='pressure'&&t[k]===true)||'normal';
-  const activeDef=TACTICS_DEF.find(d=>d.key===activeKey)||TACTICS_DEF[0];
-  const activeEl=$('coach-active-tactic');
-  if(activeEl) activeEl.textContent=activeDef.label;
+  // ── Tática ativa highlight ──
+  const t = M.tactics[side]||{};
+  const activeKey = Object.keys(t).find(k=>k!=='pressure'&&t[k]===true)||'normal';
+  const activeDef = TACTICS_DEF.find(d=>d.key===activeKey)||TACTICS_DEF[0];
+  const activeLabel = $('coach-active-tactic');
+  if(activeLabel) activeLabel.textContent = activeDef.label;
   TACTICS_DEF.forEach(td=>{
     const btn=$('tbtn-'+td.key);
-    if(!btn)return;
-    btn.classList.toggle('good', td.key===activeKey&&td.key!=='normal');
-    btn.style.borderColor = td.key===activeKey ? 'var(--gold)' : '';
+    if(!btn) return;
+    if(td.key===activeKey){
+      btn.style.borderColor='var(--gold)';
+      btn.style.background='var(--goldglow)';
+      btn.style.color='var(--gold)';
+    } else {
+      btn.style.borderColor='';
+      btn.style.background='';
+      btn.style.color='';
+    }
   });
 
-  // ── lineup ──
-  const lu=$('coach-lineup');
+  // ── Escalação ──
   if(lu){
-    const team=side==='home'?M.home:M.away;
-    lu.innerHTML=[...team.players.starters,...team.players.reserves].map(p=>{
-      const evs=p.events||[];
-      const goals=evs.filter(e=>e.type==='goal').length;
-      const yellows=evs.filter(e=>e.type==='yellow').length;
-      const hasRed=evs.some(e=>e.type==='red');
-      const isSub=!team.players.starters.includes(p)&&p.subIn===false;
-      return`<div class="lu-player ${!p.active&&hasRed?'expelled':isSub?'subbed':''}">
-        <span class="lu-num">${p.num}</span>
-        <span class="pos-badge pos-${p.pos}">${p.pos}</span>
-        <span class="lu-name">${p.name}</span>
-        <span class="rank-badge sm rank-${p.rank}" style="pointer-events:none;opacity:.7;">${p.rank}</span>
-        <span class="lu-events">${goals?'⚽'.repeat(Math.min(goals,3)):''}${yellows?'🟨':''}${hasRed?'🟥':''}</span>
-      </div>`;
-    }).join('');
+    const team = side==='home'?M.home:M.away;
+    const allPlayers = [...(team.players.starters||[]),...(team.players.reserves||[])];
+    if(allPlayers.length===0){
+      lu.innerHTML='<div style="color:var(--dim);font-size:.85rem;padding:8px;">Aguardando escalação...</div>';
+    } else {
+      lu.innerHTML=allPlayers.map(p=>{
+        const evs=p.events||[];
+        const goals=evs.filter(e=>e.type==='goal').length;
+        const yellows=evs.filter(e=>e.type==='yellow').length;
+        const hasRed=evs.some(e=>e.type==='red');
+        const stam=p.stamina!==undefined?Math.round(p.stamina):100;
+        const sc=stam>60?'var(--green)':stam>30?'var(--orange)':'var(--red)';
+        return`<div class="lu-player ${!p.active&&hasRed?'expelled':''}">
+          <span class="lu-num">${p.num}</span>
+          <span class="pos-badge pos-${p.pos}">${p.pos}</span>
+          <span class="lu-name">${p.name}</span>
+          <span class="rank-badge sm rank-${p.rank}" style="pointer-events:none;">${p.rank}</span>
+          <span class="lu-events">${goals?'⚽'.repeat(Math.min(goals,3)):''}${yellows?'🟨':''}${hasRed?'🟥':''}</span>
+          <span style="width:28px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;">
+            <span style="display:block;height:100%;width:${stam}%;background:${sc};"></span>
+          </span>
+        </div>`;
+      }).join('');
+    }
   }
 
-  // ── stats ──
-  const statsEl=$('coach-stats');
-  if(statsEl){
+  // ── Estatísticas ──
+  if(statsEl && M.stats){
     const st=M.stats;
     const rows=[
-      {label:'Posse',h:st.home.possession+'%',a:st.away.possession+'%',hv:st.home.possession,av:st.away.possession},
-      {label:'Chutes',h:st.home.shots,a:st.away.shots,hv:st.home.shots,av:st.away.shots},
-      {label:'No alvo',h:st.home.shotsOT,a:st.away.shotsOT,hv:st.home.shotsOT,av:st.away.shotsOT},
-      {label:'Faltas',h:st.home.fouls,a:st.away.fouls,hv:st.home.fouls,av:st.away.fouls},
-      {label:'Amarelos',h:st.home.yellow,a:st.away.yellow,hv:st.home.yellow,av:st.away.yellow},
+      {label:'Posse',hv:st.home.possession,av:st.away.possession,h:st.home.possession+'%',a:st.away.possession+'%'},
+      {label:'Chutes',hv:st.home.shots,av:st.away.shots,h:st.home.shots,a:st.away.shots},
+      {label:'No alvo',hv:st.home.shotsOT,av:st.away.shotsOT,h:st.home.shotsOT,a:st.away.shotsOT},
+      {label:'Faltas',hv:st.home.fouls,av:st.away.fouls,h:st.home.fouls,a:st.away.fouls},
+      {label:'Amarelos',hv:st.home.yellow,av:st.away.yellow,h:st.home.yellow,a:st.away.yellow},
     ];
     statsEl.innerHTML=rows.map(r=>{
       const tot=(r.hv+r.av)||1;
-      const hw=Math.round((r.hv/tot)*100);const aw=100-hw;
-      const mySide = side==='home'?'home':'away';
+      const hw=Math.round((r.hv/tot)*100);
+      const aw=100-hw;
+      const mySide=side==='home'?'home':'away';
       return`<div class="stat-row">
         <span class="stat-val left" style="${mySide==='home'?'color:var(--gold)':''}">${r.h}</span>
         <div class="stat-bar"><div class="stat-fill" style="width:${hw}%"></div></div>
@@ -2132,16 +2149,14 @@ function updateCoachPanel(side){
     }).join('');
   }
 
-  // ── live feed mirror ──
-  const cf=$('coach-feed');
-  if(cf&&STATE.match&&STATE.match.events){
-    const events=STATE.match.events;
+  // ── Feed ao vivo ──
+  if(cf && M.events){
     const clsMap={goal:'ev-goal','goal-big':'ev-goal-big',yellow:'ev-yellow',red:'ev-red',foul:'ev-foul',sub:'ev-sub',tactic:'ev-tactic',normal:'ev-normal'};
-    const current=cf.children.length;
-    const total=events.length;
-    if(total>current){
-      for(let i=current;i<total;i++){
-        const ev=events[i];
+    const rendered=cf.children.length;
+    const total=M.events.length;
+    if(total>rendered){
+      for(let i=rendered;i<total;i++){
+        const ev=M.events[i];
         const d=document.createElement('div');
         d.className='ev-item '+(clsMap[ev.type]||'ev-normal');
         d.innerHTML=`<span class="ev-min">${ev.min}'</span><span class="ev-ico">${ev.icon}</span><span class="ev-txt">${ev.text}</span>`;
@@ -2374,7 +2389,7 @@ function applyRemoteMatchState(data){
     matchRuntime.phase=data.phase||'pre';
     matchRuntime.minute=data.minute||0;
     // atualiza painel do técnico com dados recebidos
-    if(window._coachSide) updateCoachPanel(window._coachSide);
+    if(window._coachSide) refreshCoach(window._coachSide);
     // garante que chat está escutando
     if(!window._chatListening && window._fbReady){
       window._chatListening=true;
