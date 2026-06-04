@@ -800,10 +800,18 @@ let MATCH_ID=null;
 // ══════════════════════════════════════════════════════
 (function detectMode(){
   const hash=location.hash;
-  if(hash.startsWith('#spectate-')){MATCH_ID=hash.slice(10);ROLE="spectator";enterSpectatorMode();}
-  else if(hash.startsWith('#coach-home-')){MATCH_ID=hash.slice(12);ROLE="coach-home";enterCoachMode("home");}
-  else if(hash.startsWith('#coach-away-')){MATCH_ID=hash.slice(12);ROLE="coach-away";enterCoachMode("away");}
-  else{loadDemo();}
+  if(hash.startsWith('#spectate-')){
+    MATCH_ID=hash.slice(10);ROLE="spectator";
+    window.addEventListener('load',function(){enterSpectatorMode();});
+  } else if(hash.startsWith('#coach-home-')){
+    MATCH_ID=hash.slice(12);ROLE="coach-home";
+    window.addEventListener('load',function(){enterCoachMode("home");});
+  } else if(hash.startsWith('#coach-away-')){
+    MATCH_ID=hash.slice(12);ROLE="coach-away";
+    window.addEventListener('load',function(){enterCoachMode("away");});
+  } else {
+    window.addEventListener('load',function(){loadDemo(); setTimeout(initChat,300);});
+  }
 })();
 
 // ══════════════════════════════════════════════════════
@@ -1960,8 +1968,10 @@ function enterSpectatorMode(){
   if(window._fbReady){
     fbListenMatch(MATCH_ID);
   } else {
-    window.addEventListener('fb-ready', ()=>fbListenMatch(MATCH_ID), {once:true});
+    window.addEventListener('fb-ready', function(){fbListenMatch(MATCH_ID);}, {once:true});
   }
+  // Init chat
+  setTimeout(initChat, 200);
 }
 function enterCoachMode(side){
   document.querySelectorAll('.nav-btn').forEach(b=>b.style.display='none');
@@ -1969,13 +1979,18 @@ function enterCoachMode(side){
   goPage('coach');
   $('coach-page-title').textContent=side==='home'?'TÉCNICO — CASA':'TÉCNICO — VISITANTE';
   $('coach-page-sub').textContent=side==='home'?'Gerencie o Time da Casa':'Gerencie o Time Visitante';
-  renderCoachPanel(side);
-  // Aguarda Firebase estar pronto
+  // Small delay to ensure DOM elements are visible after goPage()
+  setTimeout(function(){
+    renderCoachPanel(side);
+  }, 50);
+  // Firebase listener
   if(window._fbReady){
     fbListenMatch(MATCH_ID);
   } else {
-    window.addEventListener('fb-ready', ()=>fbListenMatch(MATCH_ID), {once:true});
+    window.addEventListener('fb-ready', function(){fbListenMatch(MATCH_ID);}, {once:true});
   }
+  // Init chat
+  setTimeout(initChat, 200);
 }
 
 // Tactic definitions: key, label, icon, desc, effect function
@@ -2695,10 +2710,7 @@ function updateChatOnlineLabel(){
 }
 
 // Auto-init chat after page loads
-window.addEventListener('load', ()=>{
-  // Small delay so detectMode() runs first
-  setTimeout(initChat, 100);
-});
+// initChat is called by detectMode after load
 </script>
 
 <!-- ══════ NAME ENTRY MODAL ══════ -->
