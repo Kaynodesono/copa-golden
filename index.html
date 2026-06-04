@@ -1113,8 +1113,8 @@ function gameTick(){
 
   generateEvents();
   updateMatchUI();
-  // push to Firebase every 5 ticks to avoid rate limit
-  if(matchRuntime.minute%5===0) fbPushMatchState();
+  // push state every tick para espectador/técnico em tempo real
+  fbPushMatchState();
 }
 
 
@@ -2001,44 +2001,72 @@ const TACTICS_DEF = [
 function renderCoachPanel(side){
   window._coachSide = side;
 
-  // ── Substituição ──
-  const subSec=$('coach-sub-section');
-  if(subSec) subSec.innerHTML=`
-    <div style="font-size:.82rem;color:var(--dim);margin-bottom:10px;">Escolha quem sai e quem entra.</div>
-    <button class="btn btn-gold btn-full" onclick="openSubModal('${side}')">🔄 Fazer Substituição</button>
-    <div style="font-size:.75rem;color:var(--dim);margin-top:8px;text-align:center;" id="coach-subs-display">Aguardando partida...</div>`;
-
-  // ── Ordens Táticas — renderiza AGORA com botões funcionais ──
-  const orders=$('coach-team-orders');
-  if(orders){
-    orders.innerHTML=
-      `<div style="font-size:.78rem;color:var(--dim);margin-bottom:10px;">
-         Tática ativa: <b id="coach-active-tactic" style="color:var(--gold);">Jogo equilibrado</b>
-       </div>` +
-      TACTICS_DEF.map(t=>`
-        <button class="tactic-btn" id="tbtn-${t.key}" onclick="coachOrder('${side}','${t.key}')">
-          <span style="font-size:1.1rem;flex-shrink:0;">${t.icon}</span>
-          <span style="flex:1;text-align:left;">
-            <span style="font-weight:700;display:block;">${t.label}</span>
-            <span style="font-size:.72rem;color:var(--dim);">${t.desc}</span>
-          </span>
-        </button>`).join('');
+  // Sub section via DOM
+  var subSec=document.getElementById('coach-sub-section');
+  if(subSec){
+    subSec.innerHTML='';
+    var subInfo=document.createElement('div');
+    subInfo.style.cssText='font-size:.82rem;color:var(--dim);margin-bottom:10px;';
+    subInfo.textContent='Escolha quem sai e quem entra.';
+    var subBtn=document.createElement('button');
+    subBtn.className='btn btn-gold btn-full';
+    subBtn.textContent='🔄 Fazer Substituição';
+    subBtn.onclick=function(){openSubModal(side);};
+    var subCount=document.createElement('div');
+    subCount.id='coach-subs-display';
+    subCount.style.cssText='font-size:.75rem;color:var(--dim);margin-top:8px;text-align:center;';
+    subCount.textContent='Aguardando partida...';
+    subSec.appendChild(subInfo);
+    subSec.appendChild(subBtn);
+    subSec.appendChild(subCount);
   }
 
-  // ── Escalação placeholder ──
-  const lu=$('coach-lineup');
-  if(lu) lu.innerHTML='<div style="color:var(--dim);font-size:.85rem;padding:8px;">⏳ Aguardando partida...</div>';
+  // Ordens Táticas via DOM
+  var orders=document.getElementById('coach-team-orders');
+  if(orders){
+    orders.innerHTML='';
+    var hdr=document.createElement('div');
+    hdr.style.cssText='font-size:.78rem;color:var(--dim);margin-bottom:10px;';
+    hdr.innerHTML='Tática ativa: <b id="coach-active-tactic" style="color:var(--gold);">Jogo equilibrado</b>';
+    orders.appendChild(hdr);
+    for(var ti=0;ti<TACTICS_DEF.length;ti++){
+      (function(t,s){
+        var btn=document.createElement('button');
+        btn.className='tactic-btn';
+        btn.id='tbtn-'+t.key;
+        btn.onclick=function(){coachOrder(s,t.key);};
+        var ico=document.createElement('span');
+        ico.style.cssText='font-size:1.1rem;flex-shrink:0;';
+        ico.textContent=t.icon;
+        var wrap=document.createElement('span');
+        wrap.style.cssText='flex:1;text-align:left;';
+        var lbl=document.createElement('span');
+        lbl.style.cssText='font-weight:700;display:block;';
+        lbl.textContent=t.label;
+        var dsc=document.createElement('span');
+        dsc.style.cssText='font-size:.72rem;color:var(--dim);';
+        dsc.textContent=t.desc;
+        wrap.appendChild(lbl);
+        wrap.appendChild(dsc);
+        btn.appendChild(ico);
+        btn.appendChild(wrap);
+        orders.appendChild(btn);
+      })(TACTICS_DEF[ti],side);
+    }
+  }
 
-  // ── Scoreboard placeholder ──
-  const mini=$('coach-scoreboard-mini');
-  if(mini) mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);">⏳ Aguardando partida...</div>';
+  // Escalação placeholder
+  var lu=document.getElementById('coach-lineup');
+  if(lu) lu.innerHTML='<div style="color:var(--dim);font-size:.85rem;padding:8px;">Aguardando partida...</div>';
 
-  // ── Inicia loop de atualização ──
+  // Scoreboard placeholder
+  var mini=document.getElementById('coach-scoreboard-mini');
+  if(mini) mini.innerHTML='<div class="card" style="text-align:center;padding:14px;color:var(--dim);">Aguardando partida...</div>';
+
+  // Loop de refresh
   if(window._coachInterval) clearInterval(window._coachInterval);
-  window._coachInterval = setInterval(()=>refreshCoach(side), 1000);
+  window._coachInterval = setInterval(function(){refreshCoach(side);}, 1000);
 }
-
-// Chamado a cada 1s E sempre que Firebase traz dados novos
 function refreshCoach(side){
   const M = STATE.match;
   const mini = $('coach-scoreboard-mini');
@@ -2055,17 +2083,30 @@ function refreshCoach(side){
     } else {
       const phL={pre:'PRÉ-JOGO',first:'1º TEMPO',ht:'INTERVALO',second:'2º TEMPO',et1:'PRORROGAÇÃO',et2:'PRORROGAÇÃO',pen:'PÊNALTIS',ft:'ENCERRADO'};
       const phC={pre:'s-pre',first:'s-live',ht:'s-ht',second:'s-live',et1:'s-et',et2:'s-et',pen:'s-pen',ft:'s-ft'};
-      mini.innerHTML=`
-        <div style="background:linear-gradient(135deg,var(--black2),var(--card2));border:1px solid var(--border2);
-          border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
-          <div style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.home.name}</div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-            <span class="status-pill ${phC[M.phase]||'s-pre'}">${phL[M.phase]||'PRÉ-JOGO'}</span>
-            <div style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:#fff;letter-spacing:6px;">${M.homeScore} — ${M.awayScore}</div>
-            <div style="font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--gold);">${M.minute||0}'</div>
-          </div>
-          <div style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">${M.away.name}</div>
-        </div>`;
+      const ph=M.phase||'pre';
+      const sbDiv=document.createElement('div');
+      sbDiv.style.cssText='background:linear-gradient(135deg,var(--black2),var(--card2));border:1px solid var(--border2);border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;';
+      const homeDiv=document.createElement('div');
+      homeDiv.style.cssText='flex:1;text-align:center;font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1px;';
+      homeDiv.textContent=M.home.name;
+      const midDiv=document.createElement('div');
+      midDiv.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;';
+      const pill=document.createElement('span');
+      pill.className='status-pill '+(phC[ph]||'s-pre');
+      pill.textContent=phL[ph]||'PRÉ-JOGO';
+      const score=document.createElement('div');
+      score.style.cssText='font-family:Orbitron,sans-serif;font-size:2rem;font-weight:900;color:#fff;letter-spacing:6px;';
+      score.textContent=M.homeScore+' — '+M.awayScore;
+      const min=document.createElement('div');
+      min.style.cssText='font-family:Orbitron,sans-serif;font-size:.8rem;color:var(--gold);';
+      min.textContent=(M.minute||0)+"'";
+      midDiv.appendChild(pill);midDiv.appendChild(score);midDiv.appendChild(min);
+      const awayDiv=document.createElement('div');
+      awayDiv.style.cssText='flex:1;text-align:center;font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1px;';
+      awayDiv.textContent=M.away.name;
+      sbDiv.appendChild(homeDiv);sbDiv.appendChild(midDiv);sbDiv.appendChild(awayDiv);
+      mini.innerHTML='';
+      mini.appendChild(sbDiv);
     }
   }
 
@@ -2099,28 +2140,30 @@ function refreshCoach(side){
   // ── Escalação ──
   if(lu){
     const team = side==='home'?M.home:M.away;
-    const allPlayers = [...(team.players.starters||[]),...(team.players.reserves||[])];
+    const allPlayers = (team.players.starters||[]).concat(team.players.reserves||[]);
     if(allPlayers.length===0){
       lu.innerHTML='<div style="color:var(--dim);font-size:.85rem;padding:8px;">Aguardando escalação...</div>';
     } else {
-      lu.innerHTML=allPlayers.map(p=>{
+      let luHTML='';
+      allPlayers.forEach(function(p){
         const evs=p.events||[];
-        const goals=evs.filter(e=>e.type==='goal').length;
-        const yellows=evs.filter(e=>e.type==='yellow').length;
-        const hasRed=evs.some(e=>e.type==='red');
+        const goals=evs.filter(function(e){return e.type==='goal';}).length;
+        const yellows=evs.filter(function(e){return e.type==='yellow';}).length;
+        const hasRed=evs.some(function(e){return e.type==='red';});
         const stam=p.stamina!==undefined?Math.round(p.stamina):100;
         const sc=stam>60?'var(--green)':stam>30?'var(--orange)':'var(--red)';
-        return`<div class="lu-player ${!p.active&&hasRed?'expelled':''}">
-          <span class="lu-num">${p.num}</span>
-          <span class="pos-badge pos-${p.pos}">${p.pos}</span>
-          <span class="lu-name">${p.name}</span>
-          <span class="rank-badge sm rank-${p.rank}" style="pointer-events:none;">${p.rank}</span>
-          <span class="lu-events">${goals?'⚽'.repeat(Math.min(goals,3)):''}${yellows?'🟨':''}${hasRed?'🟥':''}</span>
-          <span style="width:28px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;">
-            <span style="display:block;height:100%;width:${stam}%;background:${sc};"></span>
-          </span>
-        </div>`;
-      }).join('');
+        const expCls=(!p.active&&hasRed)?'expelled':'';
+        luHTML+='<div class="lu-player '+expCls+'">'
+          +'<span class="lu-num">'+p.num+'</span>'
+          +'<span class="pos-badge pos-'+p.pos+'">'+p.pos+'</span>'
+          +'<span class="lu-name">'+p.name+'</span>'
+          +'<span class="rank-badge sm rank-'+p.rank+'" style="pointer-events:none;">'+p.rank+'</span>'
+          +'<span class="lu-events">'+(goals?'⚽'.repeat(Math.min(goals,3)):'')+(yellows?'🟨':'')+(hasRed?'🟥':'')+'</span>'
+          +'<span style="width:28px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;">'
+          +'<span style="display:block;height:100%;width:'+stam+'%;background:'+sc+';"></span>'
+          +'</span></div>';
+      });
+      lu.innerHTML=luHTML;
     }
   }
 
@@ -2134,19 +2177,21 @@ function refreshCoach(side){
       {label:'Faltas',hv:st.home.fouls,av:st.away.fouls,h:st.home.fouls,a:st.away.fouls},
       {label:'Amarelos',hv:st.home.yellow,av:st.away.yellow,h:st.home.yellow,a:st.away.yellow},
     ];
-    statsEl.innerHTML=rows.map(r=>{
+    const mySide=side==='home'?'home':'away';
+    let stHTML='';
+    rows.forEach(function(r){
       const tot=(r.hv+r.av)||1;
       const hw=Math.round((r.hv/tot)*100);
       const aw=100-hw;
-      const mySide=side==='home'?'home':'away';
-      return`<div class="stat-row">
-        <span class="stat-val left" style="${mySide==='home'?'color:var(--gold)':''}">${r.h}</span>
-        <div class="stat-bar"><div class="stat-fill" style="width:${hw}%"></div></div>
-        <span class="stat-label">${r.label}</span>
-        <div class="stat-bar"><div class="stat-fill away" style="width:${aw}%"></div></div>
-        <span class="stat-val" style="${mySide==='away'?'color:var(--gold)':''}">${r.a}</span>
-      </div>`;
-    }).join('');
+      stHTML+='<div class="stat-row">'
+        +'<span class="stat-val left" style="'+(mySide==='home'?'color:var(--gold)':'')+'">'+r.h+'</span>'
+        +'<div class="stat-bar"><div class="stat-fill" style="width:'+hw+'%"></div></div>'
+        +'<span class="stat-label">'+r.label+'</span>'
+        +'<div class="stat-bar"><div class="stat-fill away" style="width:'+aw+'%"></div></div>'
+        +'<span class="stat-val" style="'+(mySide==='away'?'color:var(--gold)':'')+'">'+r.a+'</span>'
+        +'</div>';
+    });
+    statsEl.innerHTML=stHTML;
   }
 
   // ── Feed ao vivo ──
