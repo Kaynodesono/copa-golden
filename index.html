@@ -1238,10 +1238,10 @@ function generateEvents(){
   const drainStamina=(team,side2)=>{
     team.players.starters.filter(p=>p.active).forEach(p=>{
       if(p.stamina===undefined)p.stamina=100;
-      const possDrain={GOL:.08,DEF:.12,VOL:.18,MEI:.18,PNT:.16,ATA:.15}[p.pos]||.14;
-      // tatics increase drain
-      const tacBonus=M.tactics[side2].press?.04:M.tactics[side2].aggressive?.03:0;
-      const drain=possDrain+tacBonus+Math.random()*.04;
+      const possDrain={GOL:.18,DEF:.28,VOL:.38,MEI:.38,PNT:.32,ATA:.30}[p.pos]||.30;
+      // tactics increase drain
+      const tacBonus=M.tactics[side2].press?.08:M.tactics[side2].aggressive?.06:0;
+      const drain=possDrain+tacBonus+Math.random()*.08;
       p.stamina=Math.max(0,p.stamina-drain);
       // very tired player loses effectiveness (narrate if critical)
       if(p.stamina<20&&Math.random()<.08){
@@ -2128,29 +2128,31 @@ function refreshCoach(side){
   if(!M) return;
 
   // ── Substituições restantes ──
-  const subsLeft = M.subs[side]||0;
+  const subsLeft = (M.subs&&M.subs[side]!==undefined)?M.subs[side]:5;
   if(subsD) subsD.textContent = subsLeft+' substituição(ões) restante(s)';
   if(subsL) subsL.textContent = subsLeft;
 
   // ── Tática ativa highlight ──
-  const t = M.tactics[side]||{};
-  const activeKey = Object.keys(t).find(k=>k!=='pressure'&&t[k]===true)||'normal';
-  const activeDef = TACTICS_DEF.find(d=>d.key===activeKey)||TACTICS_DEF[0];
-  const activeLabel = $('coach-active-tactic');
+  const tac = M.tactics[side]||{};
+  const activeKey = Object.keys(tac).find(function(k){return k!=='pressure'&&tac[k]===true;})||'normal';
+  const activeDef = TACTICS_DEF.find(function(d){return d.key===activeKey;})||TACTICS_DEF[0];
+  const activeLabel = document.getElementById('coach-active-tactic');
   if(activeLabel) activeLabel.textContent = activeDef.label;
-  TACTICS_DEF.forEach(td=>{
-    const btn=$('tbtn-'+td.key);
-    if(!btn) return;
-    if(td.key===activeKey){
-      btn.style.borderColor='var(--gold)';
-      btn.style.background='var(--goldglow)';
-      btn.style.color='var(--gold)';
+  // highlight active button, keep others normal — only update style not recreate
+  for(var _ti=0;_ti<TACTICS_DEF.length;_ti++){
+    var _td=TACTICS_DEF[_ti];
+    var _btn=document.getElementById('tbtn-'+_td.key);
+    if(!_btn) continue;
+    if(_td.key===activeKey){
+      _btn.style.borderColor='var(--gold)';
+      _btn.style.background='var(--goldglow)';
+      _btn.style.color='var(--gold)';
     } else {
-      btn.style.borderColor='';
-      btn.style.background='';
-      btn.style.color='';
+      _btn.style.borderColor='';
+      _btn.style.background='';
+      _btn.style.color='';
     }
-  });
+  }
 
   // ── Escalação ──
   if(lu){
@@ -2433,24 +2435,36 @@ function applyRemoteMatchState(data){
 
   // For coach: rebuild STATE.match from remote data
   if(ROLE.startsWith('coach') && data.homeStarters){
-    if(!STATE.match) STATE.match={};
+    if(!STATE.match) STATE.match={events:[]};
     STATE.match.matchId=data.matchId;
     STATE.match.homeScore=data.homeScore;
     STATE.match.awayScore=data.awayScore;
     STATE.match.minute=data.minute;
-    STATE.match.subs=data.subs||{home:5,away:5};
+    // NEVER reset subs from remote — use remote value only on first load
+    if(!STATE.match._subsLoaded){
+      STATE.match.subs=data.subs||{home:5,away:5};
+      STATE.match._subsLoaded=true;
+    } else {
+      // keep in sync with server but only if changed downward (sub was made)
+      if(data.subs){
+        STATE.match.subs.home=Math.min(STATE.match.subs.home, data.subs.home);
+        STATE.match.subs.away=Math.min(STATE.match.subs.away, data.subs.away);
+      }
+    }
+    // tactics: always sync from server
     STATE.match.tactics=data.tactics||{home:{},away:{}};
     STATE.match.stats=data.stats;
     STATE.match.events=STATE.match.events||[];
+    STATE.match.phase=data.phase||'pre';
     STATE.match.home={name:data.homeName,logo:data.homeLogo,
       players:{starters:data.homeStarters||[],reserves:data.homeReserves||[]}};
     STATE.match.away={name:data.awayName,logo:data.awayLogo,
       players:{starters:data.awayStarters||[],reserves:data.awayReserves||[]}};
     matchRuntime.phase=data.phase||'pre';
     matchRuntime.minute=data.minute||0;
-    // atualiza painel do técnico com dados recebidos
+    // atualiza painel
     if(window._coachSide) refreshCoach(window._coachSide);
-    // garante que chat está escutando
+    // garante chat
     if(!window._chatListening && window._fbReady){
       window._chatListening=true;
       fbListenChatOnly(data.matchId);
