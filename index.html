@@ -848,7 +848,7 @@ function addTeam(){
 function makePlayers(formation){
   const pos=FORMATIONS[formation]||FORMATIONS["4-4-2"];
   const starters=pos.map((p,i)=>({id:uid(),num:i+1,name:rndName(),pos:p,rank:'B',active:true,subIn:false,events:[],stamina:100}));
-  const reserves=["GOL","DEF","DEF","MEI","MEI","ATA","ATA","VOL"].map((p,i)=>({id:uid(),num:12+i,name:rndName(),pos:p,rank:'C',active:true,subIn:false,events:[],stamina:100}));
+  const reserves=["DEF","DEF","MEI","MEI","ATA","ATA","VOL","PNT"].map((p,i)=>({id:uid(),num:12+i,name:rndName(),pos:p,rank:'C',active:true,subIn:false,events:[],stamina:100}));
   return{starters,reserves};
 }
 function rndName(){return rnd(FIRST_NAMES)+' '+rnd(LAST_NAMES);}
@@ -1266,13 +1266,21 @@ function generateEvents(){
       const dribbleChance=Math.max(.05,[.15,.25,.35,.50,.65,.80][ri]+stamMod);
       if(Math.random()<dribbleChance){
         const dribles=[
-          `<b>${p.name}</b> deu uma CANETA em <b>${def.name}</b>! A torcida foi à loucura!`,
-          `<b>${p.name}</b> aplicou um CHAPÉU em <b>${def.name}</b> e seguiu em frente!`,
-          `<b>${p.name}</b> deixou <b>${def.name}</b> NO CHÃO com um drible desconcertante!`,
-          `<b>${p.name}</b> fez o elástico e passou por cima de <b>${def.name}</b>!`,
-          `<b>${p.name}</b> entrou pela esquerda, cortou pra direita e humilhou <b>${def.name}</b>!`,
-          `QUE DRIBLE! <b>${p.name}</b> girou 360° em cima de <b>${def.name}</b>!`,
-          `<b>${p.name}</b> parou, olhou nos olhos de <b>${def.name}</b> e foi embora na velocidade!`,
+          '<b>'+p.name+'</b> deu uma CANETA em <b>'+def.name+'</b>! A torcida foi à loucura!',
+          '<b>'+p.name+'</b> aplicou um CHAPÉU em <b>'+def.name+'</b> e seguiu em frente!',
+          '<b>'+p.name+'</b> deixou <b>'+def.name+'</b> NO CHÃO com um drible desconcertante!',
+          '<b>'+p.name+'</b> fez o elástico e passou por cima de <b>'+def.name+'</b>!',
+          '<b>'+p.name+'</b> entrou pela esquerda, cortou pra direita e humilhou <b>'+def.name+'</b>!',
+          'QUE DRIBLE! <b>'+p.name+'</b> girou 360° em cima de <b>'+def.name+'</b>!',
+          '<b>'+p.name+'</b> parou, olhou nos olhos de <b>'+def.name+'</b> e foi embora na velocidade!',
+          '<b>'+p.name+'</b> fintou pra esquerda, foi pra direita — <b>'+def.name+'</b> nem viu a bola passar!',
+          'ROLINHO! <b>'+p.name+'</b> encobriu a bola e <b>'+def.name+'</b> caiu sentado!',
+          '<b>'+p.name+'</b> deu um toque de calcanhar e deixou <b>'+def.name+'</b> parado no lugar!',
+          'PEDALADA! <b>'+p.name+'</b> fez duas e saiu pela direita — <b>'+def.name+'</b> perdido!',
+          '<b>'+p.name+'</b> acelerou, freou, acelerou de novo — <b>'+def.name+'</b> caiu no pênduloo!',
+          'DRIBLE DE COSTAS! <b>'+p.name+'</b> girou e <b>'+def.name+'</b> abraçou o vento!',
+          '<b>'+p.name+'</b> levantou a bola com o bico do pé — LAMBRETA em <b>'+def.name+'</b>!',
+          'Que habilidade! <b>'+p.name+'</b> passou entre as pernas de <b>'+def.name+'</b> e continuou!',
         ];
         addFeedEvent({min,type:'normal',icon:'🕺',text:rnd(dribles)});
         p.events.push({type:'dribble',min});
@@ -1296,7 +1304,12 @@ function generateEvents(){
           `Lançamento diagonal preciso de <b>${p.name}</b> — <b>${rec.name}</b> recebeu em posição perfeita!`,
           `<b>${p.name}</b> girou e fez um passe de costas pra <b>${rec.name}</b>! Que visão de jogo!`,
           `Passe de primeira de <b>${p.name}</b> cortando toda a marcação até <b>${rec.name}</b>!`,
-        ];
+          `LANÇAMENTO LONGO de <b>${p.name}</b> — bola milimétrica nos pés de <b>${rec.name}</b>!`,
+          `<b>${p.name}</b> levantou a cabeça e viu <b>${rec.name}</b> nas costas da defesa — perfeito!`,
+          `Passe em profundidade magistral de <b>${p.name}</b> — <b>${rec.name}</b> cara a cara com o gol!`,
+          `Triangulação entre <b>${p.name}</b> e <b>${rec.name}</b> — parece treino, mas é jogo!`,
+          `<b>${p.name}</b> adiantou a bola pro espaço e <b>${rec.name}</b> chegou com tudo!`,
+        ]
         addFeedEvent({min,type:'normal',icon:'🎯',text:rnd(passes)});
       } else {
         const erroPasse=[
@@ -1332,7 +1345,11 @@ function generateEvents(){
           `<b>${def.name}</b> brigou com <b>${att.name}</b> e saiu com a bola no duelo físico!`,
           `<b>${def.name}</b> usou o corpo bem e empurrou <b>${att.name}</b> pra fora da linha!`,
           `INTERCEPTAÇÃO de <b>${def.name}</b>! Cortou o passe na medida e saiu jogando!`,
-        ];
+          `<b>${def.name}</b> antecipou o movimento de <b>${att.name}</b> antes mesmo de ele chutar!`,
+          `<b>${def.name}</b> foi no homem, pegou a bola limpa — que timing perfeito!`,
+          `Cobertura impecável de <b>${def.name}</b> — não deixou <b>${att.name}</b> girar!`,
+          `<b>${def.name}</b> fez a sombra e roubou a bola de <b>${att.name}</b> por trás!`,
+        ]
         addFeedEvent({min,type:'normal',icon:'🛡️',text:rnd(desarmes)});
         def.events.push({type:'tackle',min});
       } else {
@@ -1529,26 +1546,41 @@ function generateEvents(){
     const scoreStr=`${nameH} ${M2.homeScore}x${M2.awayScore} ${nameA}`;
 
     const narratorLines=[
-      ()=>`Um salve para meu mano <b>Jalinbipal</b> que tá assistindo da arquibancada!`,
-      ()=>`Salve para <b>Thomas Turbano</b>, meu parceiro de todas as horas!`,
-      ()=>`Isso aqui tá mais quente que asfalto de Fortaleza em dezembro!`,
-      ()=>`<b>${destaque.name}</b> tá numa partida absurda hoje — que nível!`,
-      ()=>`O técnico do ${nameH} tá coçando a cabeça aqui do lado — que pressão!`,
-      ()=>`O técnico do ${nameA} parece que engoliu um tijolo de nervoso!`,
-      ()=>`${scoreStr} — a partida tá INSANA!`,
-      ()=>`Isso aqui não é futebol, isso é uma obra de arte!`,
-      ()=>`<b>${destaque.name}</b> com Rank ${destaque.rank} tá fazendo a diferença hoje!`,
-      ()=>`A torcida tá em ÊXTASE com o que tá acontecendo aqui!`,
-      ()=>`Quando foi a última vez que você viu uma partida assim? Raridade!`,
-      ()=>`O árbitro tá deixando o jogo rolar — boa filosofia!`,
-      ()=>`Meu coração não aguenta mais — que partida!`,
-      ()=>`<b>${destaque.name}</b> é um dos melhores em campo hoje, sem discussão!`,
-      ()=>`Daqui a pouco vai ter substitução — alguém no banco tá se aquecendo!`,
-      ()=>`${Math.abs(M2.homeScore-M2.awayScore)===0?'Jogo empatado — qualquer erro pode custar caro!':'Quem virar esse placar vai entrar pra história!'}`,
-      ()=>`Câmera lenta aqui mostrando que jogada foi essa — espetacular!`,
-      ()=>`A narração não consegue acompanhar o ritmo da partida!`,
-      ()=>`Salve pra galera que tá no chat acompanhando ao vivo! 🔥`,
-      ()=>`Isso aqui vai parar os noticiários amanhã!`,
+      function(){return 'Um salve para meu mano <b>Jalinbipal</b> que tá assistindo da arquibancada!';},
+      function(){return 'Salve para <b>Thomas Turbano</b>, meu parceiro de todas as horas!';},
+      function(){return 'Isso aqui tá mais quente que asfalto de Fortaleza em dezembro!';},
+      function(){return '<b>'+destaque.name+'</b> tá numa partida absurda hoje — que nível!';},
+      function(){return 'O técnico do '+nameH+' tá coçando a cabeça aqui do lado — que pressão!';},
+      function(){return 'O técnico do '+nameA+' parece que engoliu um tijolo de nervoso!';},
+      function(){return scoreStr+' — a partida tá INSANA!';},
+      function(){return 'Isso aqui não é futebol, isso é uma obra de arte!';},
+      function(){return '<b>'+destaque.name+'</b> com Rank '+destaque.rank+' tá fazendo a diferença hoje!';},
+      function(){return 'A torcida tá em ÊXTASE com o que tá acontecendo aqui!';},
+      function(){return 'Quando foi a última vez que você viu uma partida assim? Raridade!';},
+      function(){return 'O árbitro tá deixando o jogo rolar — boa filosofia!';},
+      function(){return 'Meu coração não aguenta mais — que partida!';},
+      function(){return '<b>'+destaque.name+'</b> é um dos melhores em campo hoje, sem discussão!';},
+      function(){return 'Daqui a pouco vai ter substituição — alguém no banco tá se aquecendo!';},
+      function(){return M2.homeScore===M2.awayScore?'Jogo empatado — qualquer erro pode custar caro!':'Quem virar esse placar vai entrar pra história!';},
+      function(){return 'Câmera lenta aqui mostrando que jogada foi essa — espetacular!';},
+      function(){return 'A narração não consegue acompanhar o ritmo da partida!';},
+      function(){return 'Salve pra galera que tá no chat acompanhando ao vivo! 🔥';},
+      function(){return 'Isso aqui vai parar os noticiários amanhã!';},
+      function(){return 'ESQUENTA! '+nameH+' e '+nameA+' não se entregam — que batalha!';},
+      function(){return '<b>'+destaque.name+'</b> tá em chamas hoje — melhor jogo da carreira?';},
+      function(){return 'O banco de reservas do '+nameH+' tá em pé com essa pressão!';},
+      function(){return 'A bola tá redonda e o campo tá aberto — tudo pode acontecer!';},
+      function(){return 'Jogo de alto nível aqui — dá orgulho de narrar!';},
+      function(){return 'Cuidado com as bolas paradas — hora mais perigosa da partida!';},
+      function(){return 'Que ritmo de jogo — nem tempo de respirar!';},
+      function(){return 'O sistema tático do '+nameA+' tá funcionando muito bem hoje!';},
+      function(){return 'Minuto '+M2.minute+' — e a tensão só aumenta!';},
+      function(){return 'Nem o VAR ia conseguir acompanhar essa intensidade!';},
+      function(){return 'A torcida faz barulho e os jogadores respondem em campo!';},
+      function(){return '<b>'+destaque.name+'</b> corre mais do que todos — motor incansável!';},
+      function(){return 'Golpe a golpe, minuto a minuto — ninguém cede!';},
+      function(){return 'Se você não tá assistindo isso ao vivo, tá perdendo muito!';},
+      function(){return 'Que partida, minha gente — historia sendo escrita aqui!';},
     ];
     addFeedEvent({min,type:'normal',icon:'📢',text:rnd(narratorLines)()});
   }
@@ -1870,26 +1902,63 @@ function openSubModal(side){
   if(!M){toast('Aguardando dados da partida...','⏳');return;}
   const subs=M.subs[side];
   if(subs<=0){toast('Sem substituições restantes!','⚠️');return;}
-  subModalSide=side;subOutSel=null;subInSel=null;
+  subModalSide=side;subOutSel=null;subInSel=null;subNewPos=null;
   $('sub-modal-team').textContent=side==='home'?M.home.name:M.away.name;
   const team=side==='home'?M.home:M.away;
   const outList=$('sub-out-list');const inList=$('sub-in-list');
-  outList.innerHTML=team.players.starters.filter(p=>p.active&&!p.subIn&&p.pos!=='GOL')
-    .map(p=>{
-      const stam=p.stamina!==undefined?Math.round(p.stamina):100;
-      const stamCol=stam>60?'var(--green)':stam>30?'var(--orange)':'var(--red)';
-      const warn=stam<40?' ⚠️':'';
-      return`<button class="sub-player-btn" onclick="selSubOut('${p.id}',this)">
-        <span class="pos-badge pos-${p.pos}">${p.pos}</span>
-        <span style="flex:1;">${p.name}${warn}</span>
-        <span style="font-size:.7rem;color:${stamCol};font-weight:700;">${stam}%</span>
-      </button>`;
-    }).join('');
-  inList.innerHTML=team.players.reserves.filter(p=>p.active&&!p.subIn)
-    .map(p=>`<button class="sub-player-btn" onclick="selSubIn('${p.id}',this)">
-      <span class="pos-badge pos-${p.pos}">${p.pos}</span>${p.name}</button>`).join('');
+  // OUT: titulares ativos, exceto GOL, exceto os que já foram substituídos (subIn=true = já entrou como reserva)
+  const eligible=team.players.starters.filter(function(p){return p.active&&p.pos!=='GOL';});
+  outList.innerHTML='';
+  eligible.forEach(function(p){
+    const stam=p.stamina!==undefined?Math.round(p.stamina):100;
+    const stamCol=stam>60?'var(--green)':stam>30?'var(--orange)':'var(--red)';
+    const warn=stam<40?' ⚠️':'';
+    const btn=document.createElement('button');
+    btn.className='sub-player-btn';
+    btn.onclick=function(){selSubOut(p.id,btn);};
+    btn.innerHTML='<span class="pos-badge pos-'+p.pos+'">'+p.pos+'</span>'
+      +'<span style="flex:1;">'+p.name+warn+'</span>'
+      +'<span style="font-size:.7rem;color:'+stamCol+';font-weight:700;">'+stam+'%</span>';
+    outList.appendChild(btn);
+  });
+  // IN: reservas que ainda não entraram
+  const available=team.players.reserves.filter(function(p){return !p.subIn;});
+  inList.innerHTML='';
+  available.forEach(function(p){
+    const btn=document.createElement('button');
+    btn.className='sub-player-btn';
+    btn.onclick=function(){selSubIn(p.id,btn);};
+    btn.innerHTML='<span class="pos-badge pos-'+p.pos+'">'+p.pos+'</span>'
+      +'<span style="flex:1;">'+p.name+'</span>'
+      +'<span class="rank-badge sm rank-'+p.rank+'" style="pointer-events:none;">'+p.rank+'</span>';
+    inList.appendChild(btn);
+  });
+  // Position change selector
+  var posRow=document.getElementById('sub-pos-row');
+  if(!posRow){
+    posRow=document.createElement('div');
+    posRow.id='sub-pos-row';
+    posRow.style.cssText='margin-top:10px;';
+    posRow.innerHTML='<div style="font-size:.75rem;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🔀 Mudar posição do reserva (opcional)</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;" id="sub-pos-btns"></div>';
+    inList.parentElement.appendChild(posRow);
+  }
+  var posBtns=document.getElementById('sub-pos-btns');
+  posBtns.innerHTML='';
+  ['DEF','VOL','MEI','PNT','ATA'].forEach(function(pos){
+    var pb=document.createElement('button');
+    pb.className='btn btn-ghost btn-xs';
+    pb.textContent=pos;
+    pb.onclick=function(){
+      subNewPos=pos;
+      document.querySelectorAll('#sub-pos-btns .btn').forEach(function(b){b.style.borderColor='';b.style.color='';});
+      pb.style.borderColor='var(--gold)';pb.style.color='var(--gold)';
+    };
+    posBtns.appendChild(pb);
+  });
   openModal('sub-modal');
 }
+var subNewPos=null;
 function selSubOut(id,btn){
   subOutSel=id;document.querySelectorAll('#sub-out-list .sub-player-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');
 }
@@ -1912,13 +1981,18 @@ function confirmSub(){
   const inn=team.players.reserves.find(p=>p.id===subInSel);
   if(!out||!inn)return;
   if(M.subs[side]<=0){toast('Sem substituições!','⚠️');return;}
-  out.active=false;out.subIn=true;inn.active=true;inn.subIn=true;
+  out.active=false;out.subIn=true;
+  // Apply optional position change
+  if(subNewPos) inn.pos=subNewPos;
+  inn.active=true;inn.subIn=true;
   const idx=team.players.starters.indexOf(out);
   team.players.starters[idx]=inn;
   M.subs[side]--;
   const min=M.minute||0;
-  addFeedEvent({min,type:'sub',icon:'🔄',text:`<b>Substituição ${side==='home'?M.home.name:M.away.name}:</b> Sai ${out.name}, Entra ${inn.name}`});
-  toast(inn.name+' entrou!','🔄');
+  const posNote=subNewPos?' (jogando como '+subNewPos+')':'';
+  addFeedEvent({min,type:'sub',icon:'🔄',text:'<b>Substituição '+(side==='home'?M.home.name:M.away.name)+':</b> Sai '+out.name+', Entra '+inn.name+posNote});
+  toast(inn.name+' entrou'+posNote+'!','🔄');
+  subNewPos=null;
   updateLineups();closeModal('sub-modal');
   fbPushMatchState();
 }
@@ -2231,22 +2305,25 @@ function refreshCoach(side){
 
 function coachOrder(side,order){
   const M=STATE.match;
-  // Coach mode: may not have local STATE.match — use Firebase
-  if(!M && ROLE.startsWith('coach')){
-    fbPushCoachAction({type:'tactic', side, order});
-    toast('Ordem enviada!','🎮');
-    return;
-  }
-  if(!M){toast('Partida não iniciada ainda','⚠️');return;}
-  const def=TACTICS_DEF.find(d=>d.key===order);
+  if(!M){toast('Aguardando partida...','⏳');return;}
+  const def=TACTICS_DEF.find(function(d){return d.key===order;});
   if(!def)return;
-  Object.keys(M.tactics[side]).forEach(k=>{ if(k!=='pressure') M.tactics[side][k]=false; });
+  // Apply locally
+  Object.keys(M.tactics[side]).forEach(function(k){ if(k!=='pressure') M.tactics[side][k]=false; });
   if(def.apply) def.apply(M.tactics[side]);
+  // Mark as locally changed so server won't overwrite
+  M._localTacticChanged=true;
   toast(def.label+' ativado!','🎮');
-  addFeedEvent({min:M.minute||0,type:'tactic',icon:def.icon,
-    text:`<b>Tática (${side==='home'?M.home.name:M.away.name}):</b> ${def.label} — ${def.desc}`});
-  updateCoachPanel(side);
-  fbPushMatchState();
+  // If admin, update feed and push
+  if(ROLE==='admin'){
+    addFeedEvent({min:M.minute||0,type:'tactic',icon:def.icon,
+      text:'<b>Tática ('+( side==='home'?M.home.name:M.away.name)+'): </b>'+def.label+' — '+def.desc});
+    fbPushMatchState();
+  } else {
+    // Coach: send action to Firebase for admin to apply
+    fbPushCoachAction({type:'tactic', side:side, order:order});
+  }
+  if(window._coachSide) refreshCoach(window._coachSide);
 }
 function listenFirebase(){/* handled by fbListenMatch */}
 
@@ -2451,8 +2528,10 @@ function applyRemoteMatchState(data){
         STATE.match.subs.away=Math.min(STATE.match.subs.away, data.subs.away);
       }
     }
-    // tactics: always sync from server
-    STATE.match.tactics=data.tactics||{home:{},away:{}};
+    // tactics: só sincroniza do servidor se técnico não tiver mudado localmente
+    if(!STATE.match._localTacticChanged){
+      STATE.match.tactics=data.tactics||{home:{},away:{}};
+    }
     STATE.match.stats=data.stats;
     STATE.match.events=STATE.match.events||[];
     STATE.match.phase=data.phase||'pre';
