@@ -146,36 +146,55 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
 .nav-btn:hover{color:var(--text);border-color:var(--border2);}
 .nav-btn.active{background:var(--goldglow);color:var(--gold);border-color:var(--gold2);}
 
-.rank-C{background:#3a3a3a;color:#aaa;border:1px solid #555;}
-.rank-B{background:linear-gradient(135deg,#1a4a28,#2a7a3a);color:#7fff9a;border:1px solid #2a7a3a;}
-.rank-A{background:linear-gradient(135deg,#0d3a7a,#1a5aaa);color:#7fc4ff;border:1px solid #1a5aaa;}
+.rank-C{background:#2a2a2a;color:#888;border:1px solid #444;}
+.rank-B{
+  background:linear-gradient(135deg,#0e3018,#1a5a28,#0e3018);
+  color:#50e878;border:1px solid #2a7a3a;
+  text-shadow:0 0 4px rgba(80,232,120,.4);
+}
+.rank-A{
+  background:linear-gradient(135deg,#0a2550,#1a5aaa,#0a2550);
+  color:#60c8ff;border:1px solid #2a7acc;
+  box-shadow:0 0 5px rgba(42,122,204,.4);
+  text-shadow:0 0 5px rgba(96,200,255,.5);
+}
 .rank-S{
-  background:linear-gradient(135deg,#6a2090,#9a40c0);
+  background:linear-gradient(135deg,#4a1070,#8a30b0,#4a1070);
   color:#f0c040;border:1px solid #c060e0;
-  box-shadow:0 0 6px rgba(160,64,220,.5);
-  text-shadow:0 0 6px rgba(240,192,64,.7);
+  box-shadow:0 0 8px rgba(160,64,220,.6);
+  text-shadow:0 0 8px rgba(240,192,64,.9),0 0 2px #fff;
+  animation:sGlow 1.8s infinite alternate;
 }
 .rank-SS{
-  background:linear-gradient(135deg,#8a1800,#d03000,#ff5000);
-  color:#fff;border:1px solid #ff6a00;
-  box-shadow:0 0 8px rgba(255,80,0,.55);
-  text-shadow:0 1px 4px rgba(0,0,0,.6);
+  background:linear-gradient(135deg,#6a1000,#cc2800,#ff5000,#cc2800,#6a1000);
+  color:#fff;border:1px solid #ff7020;
+  box-shadow:0 0 10px rgba(255,80,0,.7),0 0 3px rgba(255,180,0,.3) inset;
+  text-shadow:0 0 6px rgba(255,200,100,.8),0 1px 2px rgba(0,0,0,.8);
+  animation:ssGlow 1.5s infinite alternate;
 }
 .rank-SSS{
-  background:linear-gradient(135deg,#3a006a,#7a20c0,#a040e0,#7a20c0,#3a006a);
-  color:#fff;border:1px solid #c060ff;
-  box-shadow:0 0 12px rgba(160,64,240,.7),0 0 3px rgba(255,255,255,.2) inset;
-  text-shadow:0 0 8px rgba(220,160,255,.9),0 0 2px #fff;
-  animation:sssGlow 2s infinite alternate;
+  background:linear-gradient(135deg,#2a0050,#6010a0,#a030d8,#c050ff,#a030d8,#6010a0,#2a0050);
+  color:#fff;border:2px solid #d070ff;
+  box-shadow:0 0 16px rgba(180,80,255,.9),0 0 30px rgba(140,40,220,.4),0 0 4px rgba(255,255,255,.3) inset;
+  text-shadow:0 0 10px rgba(255,200,255,1),0 0 3px #fff;
+  animation:sssGlow 1.2s infinite alternate;
+}
+@keyframes sGlow{
+  from{box-shadow:0 0 6px rgba(160,64,220,.5);}
+  to{box-shadow:0 0 14px rgba(200,100,255,.9),0 0 4px rgba(240,192,64,.4);}
+}
+@keyframes ssGlow{
+  from{box-shadow:0 0 8px rgba(255,80,0,.6);}
+  to{box-shadow:0 0 18px rgba(255,120,0,1),0 0 6px rgba(255,200,0,.3);}
 }
 @keyframes sssGlow{
-  from{box-shadow:0 0 8px rgba(160,64,240,.6),0 0 2px rgba(255,255,255,.1) inset;}
-  to{box-shadow:0 0 18px rgba(180,80,255,.9),0 0 6px rgba(255,255,255,.15) inset;}
+  from{box-shadow:0 0 12px rgba(160,64,240,.7),0 0 20px rgba(120,0,200,.3);}
+  to{box-shadow:0 0 24px rgba(200,100,255,1),0 0 40px rgba(160,40,255,.5),0 0 8px rgba(255,255,255,.2) inset;}
 }
 .rank-badge{display:inline-flex;align-items:center;justify-content:center;
   min-width:36px;padding:2px 7px;border-radius:5px;font-family:'Bebas Neue',sans-serif;
   font-size:.85rem;letter-spacing:1.5px;cursor:pointer;transition:all .18s;font-weight:700;}
-.rank-badge:hover{transform:scale(1.15);filter:brightness(1.2);}
+.rank-badge:hover{transform:scale(1.18);filter:brightness(1.25);}
 .rank-badge.sm{min-width:28px;font-size:.72rem;padding:1px 5px;letter-spacing:1px;}
 
 .pos-GOL{background:#e06000;color:#000;}
@@ -810,9 +829,66 @@ let MATCH_ID=null;
     MATCH_ID=hash.slice(12);ROLE="coach-away";
     window.addEventListener('load',function(){enterCoachMode("away");});
   } else {
-    window.addEventListener('load',function(){loadDemo(); setTimeout(initChat,300);});
+    window.addEventListener('load',function(){
+      const saved=sessionStorage.getItem('cg_admin_auth');
+      if(saved==='KAYNMELHORQUEAGAMI2099'){
+        loadDemo(); setTimeout(initChat,300);
+      } else {
+        showAdminLogin();
+      }
+    });
   }
 })();
+
+function showAdminLogin(){
+  var bg=document.createElement('div');
+  bg.id='admin-login-bg';
+  bg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:36px 32px;max-width:380px;width:100%;text-align:center;box-shadow:0 0 80px rgba(0,0,0,.9);';
+  var icon=document.createElement('div');icon.style.cssText='font-size:2.5rem;margin-bottom:8px;';icon.textContent='⚽';
+  var title=document.createElement('div');
+  title.style.cssText='font-size:2rem;letter-spacing:5px;margin-bottom:6px;color:var(--gold);font-family:Bebas Neue,sans-serif;';
+  title.textContent='COPA GOLDEN';
+  var sub=document.createElement('div');
+  sub.style.cssText='font-size:.85rem;color:var(--dim);margin-bottom:24px;';
+  sub.textContent='Area restrita - Digite a senha de administrador';
+  var inp=document.createElement('input');
+  inp.type='password';inp.id='admin-pw-inp';inp.placeholder='Senha...';
+  inp.style.cssText='text-align:center;font-size:1rem;margin-bottom:12px;letter-spacing:2px;width:100%;background:var(--black2);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:9px 13px;';
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')checkAdminPw();});
+  var errDiv=document.createElement('div');errDiv.id='admin-pw-err';
+  errDiv.style.cssText='color:var(--red);font-size:.82rem;margin-bottom:10px;min-height:18px;';
+  var btn=document.createElement('button');
+  btn.className='btn btn-gold btn-full';btn.textContent='Entrar';
+  btn.addEventListener('click',checkAdminPw);
+  box.appendChild(icon);box.appendChild(title);box.appendChild(sub);
+  box.appendChild(inp);box.appendChild(errDiv);box.appendChild(btn);
+  bg.appendChild(box);
+  document.body.appendChild(bg);
+  setTimeout(function(){inp.focus();},100);
+}
+
+function checkAdminPw(){
+  var inp=document.getElementById('admin-pw-inp');
+  var err=document.getElementById('admin-pw-err');
+  if(!inp)return;
+  var val=inp.value.trim();
+  if(val==='KAYNMELHORQUEAGAMI2099'){
+    sessionStorage.setItem('cg_admin_auth','KAYNMELHORQUEAGAMI2099');
+    var bg=document.getElementById('admin-login-bg');
+    if(bg)bg.remove();
+    loadDemo();
+    setTimeout(initChat,300);
+  } else {
+    inp.value='';
+    if(err){err.textContent='Senha incorreta. Tente novamente.';}
+    setTimeout(function(){if(err)err.textContent='';},2500);
+    inp.focus();
+  }
+}
+
+
 
 // ══════════════════════════════════════════════════════
 // NAVIGATION
@@ -1014,9 +1090,19 @@ function startMatch(matchId){
   window._processedActions=new Set();
   window._coachSide=null;
 
+  // Reset player events/stamina for fresh match
+  const resetPlayers=(team)=>{
+    const all=[...(team.players.starters||[]),...(team.players.reserves||[])];
+    all.forEach(p=>{p.events=[];p.stamina=100;p.subIn=false;p.active=true;});
+  };
+  const homeTeam=deep(m.home);
+  const awayTeam=deep(m.away);
+  resetPlayers(homeTeam);
+  resetPlayers(awayTeam);
+
   STATE.match={
     matchId,
-    home:deep(m.home),away:deep(m.away),
+    home:homeTeam,away:awayTeam,
     homeScore:0,awayScore:0,
     homePenScore:0,awayPenScore:0,
     events:[],
@@ -1043,6 +1129,13 @@ function startMatch(matchId){
 
   // clear feed
   const feedEl=$('feed'); if(feedEl) feedEl.innerHTML='';
+  // Store logos in sessionStorage for coach/spectator to retrieve
+  try{
+    sessionStorage.setItem('cg_logo_h_'+STATE.match.matchId, STATE.match.home.logo||'');
+    sessionStorage.setItem('cg_logo_a_'+STATE.match.matchId, STATE.match.away.logo||'');
+    sessionStorage.setItem('cg_name_h_'+STATE.match.matchId, STATE.match.home.name||'');
+    sessionStorage.setItem('cg_name_a_'+STATE.match.matchId, STATE.match.away.name||'');
+  }catch(e){}
 
   updateMatchUI();
   addFeedEvent({min:0,type:'normal',icon:'📋',text:`<b>${m.home.name}</b> vs <b>${m.away.name}</b> — Partida prestes a começar!`});
@@ -1167,7 +1260,26 @@ const CELEBRATIONS=[
   'ficou parado estático olhando pro placar em silêncio dramático!',
   'fez o gesto de "quieto" e depois explodiu em festa!',
   'correu até o bandeirinha e deu um abraço nele!',
-  'fez a pose do Eren Yeager — punho no coração!'
+  'fez a pose do Eren Yeager - punho no coracao!',
+  'imitou o Gojo Satoru de olhos fechados e virou para a torcida!',
+  'fez o gesto do Kamado Tanjiro respiracao total do sol!',
+  'imitou o Shanks levantando o chapeu para o ceu!',
+  'saiu correndo igual Naruto em modo Sage e so parou no gol adversario!',
+  'imitou o Saitama socando a propria mao - um golpe e ja era!',
+  'fez a pose do All Might com os polegares pra cima: Plus Ultra!',
+  'imitou o Homelander pairando no ar com os bracos cruzados!',
+  'fez o gesto do Billy Butcher apontando o dedo - oi mate!',
+  'imitou o Hughie levando um susto e saindo correndo assustado!',
+  'fez a dancinha do SpongeBob no gramado!',
+  'imitou o Patrick dormindo em cima da goleira!',
+  'saiu deslizando pelo gramado igual o Michael Jackson no Thriller!',
+  'fez o gesto do Vegeta cruzando os bracos - It is over 9000!',
+  'imitou o Goku carregando o Espirit Bomb no meio do campo!',
+  'fez a pose do Levi Ackerman - bracos para tras, olhar afiado!',
+  'imitou o Zoro perdido no campo tentando achar a saida!',
+  'fez o dab classico e ficou parado olhando pro goleiro!',
+  'imitou o Aquaman saindo do oceano com os bracos abertos!',
+  'saiu correndo com a camisa na cabeca igual Suarez!'
 ];
 
 // ── TIPOS DE GOL ──
@@ -1238,10 +1350,10 @@ function generateEvents(){
   const drainStamina=(team,side2)=>{
     team.players.starters.filter(p=>p.active).forEach(p=>{
       if(p.stamina===undefined)p.stamina=100;
-      const possDrain={GOL:.18,DEF:.28,VOL:.38,MEI:.38,PNT:.32,ATA:.30}[p.pos]||.30;
+      const possDrain={GOL:.40,DEF:.65,VOL:.82,MEI:.82,PNT:.72,ATA:.70}[p.pos]||.68;
       // tactics increase drain
-      const tacBonus=M.tactics[side2].press?.08:M.tactics[side2].aggressive?.06:0;
-      const drain=possDrain+tacBonus+Math.random()*.08;
+      const tacBonus=M.tactics[side2].press?.18:M.tactics[side2].aggressive?.15:0;
+      const drain=possDrain+tacBonus+Math.random()*.20;
       p.stamina=Math.max(0,p.stamina-drain);
       // very tired player loses effectiveness (narrate if critical)
       if(p.stamina<20&&Math.random()<.08){
@@ -1281,8 +1393,15 @@ function generateEvents(){
           'DRIBLE DE COSTAS! <b>'+p.name+'</b> girou e <b>'+def.name+'</b> abraçou o vento!',
           '<b>'+p.name+'</b> levantou a bola com o bico do pé — LAMBRETA em <b>'+def.name+'</b>!',
           'Que habilidade! <b>'+p.name+'</b> passou entre as pernas de <b>'+def.name+'</b> e continuou!',
-        ];
-        addFeedEvent({min,type:'normal',icon:'🕺',text:rnd(dribles)});
+        ,
+          'SOMBRERO! <b>'+p.name+'</b> levantou a bola por cima de <b>'+def.name+'</b>!',
+          'FLIP FLAP! <b>'+p.name+'</b> elastico duplo e <b>'+def.name+'</b> ficou rodando!',
+          '<b>'+p.name+'</b> parou com o peito e ja saiu driblando <b>'+def.name+'</b>!',
+          'Drible de escola! <b>'+p.name+'</b> abriu, fechou e passou por <b>'+def.name+'</b>!',
+          '<b>'+p.name+'</b> jogou na trave, correu e deixou <b>'+def.name+'</b> pra tras!',
+        ]
+        const dribRank='<span class="rank-badge sm rank-'+p.rank+'" style="pointer-events:none;vertical-align:middle;margin:0 3px;">'+p.rank+'</span>';
+        addFeedEvent({min,type:'normal',icon:'🕺',text:rnd(dribles)+' '+dribRank});
         p.events.push({type:'dribble',min});
       }
     }
@@ -1309,8 +1428,14 @@ function generateEvents(){
           `Passe em profundidade magistral de <b>${p.name}</b> — <b>${rec.name}</b> cara a cara com o gol!`,
           `Triangulação entre <b>${p.name}</b> e <b>${rec.name}</b> — parece treino, mas é jogo!`,
           `<b>${p.name}</b> adiantou a bola pro espaço e <b>${rec.name}</b> chegou com tudo!`,
+          `TRIVELA de <b>${p.name}</b>! Parte externa do pé e encaixou nos pés de <b>${rec.name}</b>!`,
+          `Passe de letra de <b>${p.name}</b>! Calcanhar sem olhar e achou <b>${rec.name}</b> sozinho!`,
+          `CHAPEU: <b>${p.name}</b> tocou por cima da marcação e <b>${rec.name}</b> dominou na area!`,
+          `Cruzamento preciso de <b>${p.name}</b> na cabeça de <b>${rec.name}</b> — assistência perfeita!`,
+          `Lançamento cirúrgico de <b>${p.name}</b> cortando três linhas até <b>${rec.name}</b>!`,
         ]
-        addFeedEvent({min,type:'normal',icon:'🎯',text:rnd(passes)});
+        const passRank='<span class="rank-badge sm rank-'+p.rank+'" style="pointer-events:none;vertical-align:middle;margin:0 3px;">'+p.rank+'</span>';
+        addFeedEvent({min,type:'normal',icon:'🎯',text:rnd(passes)+' '+passRank});
       } else {
         const erroPasse=[
           `Erro de passe de <b>${p.name}</b> — bola entregue ao adversário no meio-campo!`,
@@ -1349,8 +1474,14 @@ function generateEvents(){
           `<b>${def.name}</b> foi no homem, pegou a bola limpa — que timing perfeito!`,
           `Cobertura impecável de <b>${def.name}</b> — não deixou <b>${att.name}</b> girar!`,
           `<b>${def.name}</b> fez a sombra e roubou a bola de <b>${att.name}</b> por trás!`,
+          `Pressão alta de <b>${def.name}</b> forçou <b>${att.name}</b> a errar o passe — bola recuperada!`,
+          `BLOCO! <b>${def.name}</b> jogou o corpo na frente do chute de <b>${att.name}</b>!`,
+          `Dois contra um e <b>${def.name}</b> saiu com a bola mesmo assim — que coragem!`,
+          `<b>${def.name}</b> leu o corpo de <b>${att.name}</b> antes do drible e já tinha saído com a bola!`,
+          `Desarme preventivo de <b>${def.name}</b> — cortou o contra-ataque no nascedouro!`,
         ]
-        addFeedEvent({min,type:'normal',icon:'🛡️',text:rnd(desarmes)});
+        const tacRank='<span class="rank-badge sm rank-'+def.rank+'" style="pointer-events:none;vertical-align:middle;margin:0 3px;">'+def.rank+'</span>';
+        addFeedEvent({min,type:'normal',icon:'🛡️',text:rnd(desarmes)+' '+tacRank});
         def.events.push({type:'tackle',min});
       } else {
         // falhou — atacante passou
@@ -1416,12 +1547,14 @@ function generateEvents(){
         }
       } else {
         addFeedEvent({min,type:'tactic',icon:'❌',text:`<b>VAR:</b> Gol anulado por impedimento milimétrico! Árbitro voltou atrás.`});
-        // if last event was goal, undo it
-        if(M.homeScore>0||M.awayScore>0){
-          const side=Math.random()<.5?'home':'away';
-          if(side==='home'&&M.homeScore>0)M.homeScore--;
-          else if(side==='away'&&M.awayScore>0)M.awayScore--;
-          updateScoreboard();
+        // only anull if a goal was scored in last 3 minutes
+        const recentGoal=M.events.slice(-8).find(function(e){return e.type==='goal-big'&&e.icon==='⚽'&&(min-e.min)<=3;});
+        if(recentGoal){
+          const varSide=recentGoal.text.includes(M.home.name)?'home':'away';
+          if(varSide==='home'&&M.homeScore>0){M.homeScore--;updateScoreboard();}
+          else if(varSide==='away'&&M.awayScore>0){M.awayScore--;updateScoreboard();}
+        } else {
+          addFeedEvent({min,type:'tactic',icon:'✅',text:'<b>VAR:</b> Nenhum gol recente para anular. Jogo continua!'});
         }
       }
     }, Math.random()<.5?800:1600);
@@ -1447,12 +1580,14 @@ function generateEvents(){
       const gkBlock=GK_RANK_BLOCK[gkRank]||.18;
       const tac=M.tactics[side];const tacOpp=M.tactics[opp];
       let goalMod=0;
-      if(tac.press)goalMod+=.04;
-      if(tac.highline)goalMod+=.03;
-      if(tac.counterattack)goalMod+=.03;
-      if(tac.longball&&(scorer.pos==='ATA'||scorer.pos==='PNT'))goalMod+=.03;
-      if(tacOpp.defensive)goalMod-=.04;
-      if(tacOpp.highline)goalMod+=.03;
+      if(tac.press)goalMod+=.08;
+      if(tac.highline)goalMod+=.06;
+      if(tac.counterattack)goalMod+=.07;
+      if(tac.longball&&(scorer.pos==='ATA'||scorer.pos==='PNT'))goalMod+=.06;
+      if(tac.possession)goalMod+=.03; // more control = slightly more chances
+      if(tacOpp.defensive)goalMod-=.08;
+      if(tacOpp.highline)goalMod+=.06; // exploit space behind high line
+      if(tacOpp.press)goalMod-=.02; // under pressure = harder
       // stamina penalty — very tired = less effective
       const stam=scorer.stamina!==undefined?scorer.stamina:100;
       if(stam<40)goalMod-=.06;
@@ -1467,14 +1602,16 @@ function generateEvents(){
         if(assist)assist.events.push({type:'assist',min});
         const desc=gt.desc(scorer.name, assist?assist.name:null);
         const celeb=rnd(CELEBRATIONS);
-        addFeedEvent({min,type:'goal-big',icon:gt.icon,text:`${desc}<br><span style="color:var(--gold);font-size:.82rem;">🎉 ${scorer.name.split(' ')[0]} ${celeb}</span>`});
+        const scorerRankBadge='<span class="rank-badge sm rank-'+scorer.rank+'" style="pointer-events:none;vertical-align:middle;margin:0 3px;">'+scorer.rank+'</span>';
+        addFeedEvent({min,type:'goal-big',icon:gt.icon,text:desc+' '+scorerRankBadge+'<br><span style="color:var(--gold);font-size:.82rem;">🎉 '+scorer.name.split(' ')[0]+' '+celeb+'</span>'});
         addFeedEvent({min,type:'goal-big',icon:'📊',text:`<b>${M.home.name} ${M.homeScore} x ${M.awayScore} ${M.away.name}</b>`});
         updateScoreboard();scorePop();confettiBlast();
       } else {
         // goalkeeper save
         const gkName=gk?gk.name:'Goleiro';
         const saveFn=rnd(GK_SAVES);
-        addFeedEvent({min,type:'foul',icon:'🧤',text:saveFn(gkName)});
+        const gkRankBadge=gk?'<span class="rank-badge sm rank-'+gk.rank+'" style="pointer-events:none;vertical-align:middle;margin:0 3px;">'+gk.rank+'</span>':'';
+        addFeedEvent({min,type:'foul',icon:'🧤',text:saveFn(gkName)+' '+gkRankBadge});
         if(gk)gk.events.push({type:'save',min});
       }
     } else {
@@ -1493,17 +1630,17 @@ function generateEvents(){
   }
 
   // ── FALTAS & CARTÕES ──
-  const foulChance=.12+(M.tactics.home.aggressive?.04:0)+(M.tactics.away.aggressive?.04:0);
+  const foulChance=.08+(M.tactics.home.aggressive?.03:0)+(M.tactics.away.aggressive?.03:0);
   if(Math.random()<foulChance){
     const side=Math.random()<.5?'home':'away';
     const team=side==='home'?M.home:M.away;
-    // goleiro raramente leva falta (5% chance de estar no pool)
-    const pool=team.players.starters.filter(x=>x.active&&(x.pos!=='GOL'||Math.random()<.05));
+    // goleiro raramente leva falta (2% chance)
+    const pool=team.players.starters.filter(x=>x.active&&(x.pos!=='GOL'||Math.random()<.02));
     const p=rnd(pool);
     if(!p)return;
     M.stats[side].fouls++;
-    const isYellow=Math.random()<.25;
-    const isRed=!isYellow&&Math.random()<.04;
+    const isYellow=Math.random()<.15;  // 15% chance (was 25%)
+    const isRed=!isYellow&&Math.random()<.02;  // 2% chance (was 4%)
     if(isYellow){
       p.events.push({type:'yellow',min});M.stats[side].yellow++;
       const yellows=p.events.filter(e=>e.type==='yellow').length;
@@ -1581,6 +1718,21 @@ function generateEvents(){
       function(){return 'Golpe a golpe, minuto a minuto — ninguém cede!';},
       function(){return 'Se você não tá assistindo isso ao vivo, tá perdendo muito!';},
       function(){return 'Que partida, minha gente — historia sendo escrita aqui!';},
+      function(){return 'Isso aqui ta mais tenso que o Homelander descobrindo critica no Twitter!';},
+      function(){return 'O Billy Butcher estaria orgulhoso dessa pressao - oi mate!';},
+      function(){return 'Esse jogo parece The Boys: violento, imprevisivel e viciante!';},
+      function(){return '<b>'+destaque.name+'</b> ta jogando igual o Butcher luta - na raiva!';},
+      function(){return 'Nem o Composto V ia deixar o goleiro mais rapido que hoje!';},
+      function(){return 'A torcida gritando igual fangirl vendo o Homelander sorrir!';},
+      function(){return 'Isso aqui ta mais imprevisivel que o final de Attack on Titan!';},
+      function(){return 'Nivel Jujutsu Kaisen - cada minuto alguem pode cair!';},
+      function(){return 'A defesa ta solida igual o Escudo do Capitao America!';},
+      function(){return '<b>'+destaque.name+'</b> invocado igual Levi Ackerman com a espada na mao!';},
+      function(){return 'Narrador pedindo um salve pra galera no chat! Voces sao demais!';},
+      function(){return 'Minuto '+M2.minute+' e ninguem ta sentado nas arquibancadas!';},
+      function(){return 'Tecnico precisa de algo especial agora - hora de arriscar!';},
+      function(){return 'Se isso fosse anime ia estar tocando o opening agora!';},
+      function(){return nameH+' e '+nameA+' - classico que nunca decepciona!';},
     ];
     addFeedEvent({min,type:'normal',icon:'📢',text:rnd(narratorLines)()});
   }
@@ -1671,15 +1823,19 @@ function doPenalties(){
 }
 
 function calcMVP(team){
-  const all=[...team.players.starters,...team.players.reserves];
+  // Only consider starters and players who actually played (entered as sub)
+  const all=[
+    ...team.players.starters,
+    ...(team.players.reserves||[]).filter(p=>p.subIn)
+  ];
   let best=null,bestScore=-1;
-  all.forEach(p=>{
+  all.forEach(function(p){
     const evs=p.events||[];
-    const score=evs.filter(e=>e.type==='goal').length*3
-      +evs.filter(e=>e.type==='assist').length*2
-      +evs.filter(e=>e.type==='save').length*2
-      +evs.filter(e=>e.type==='dribble').length*1
-      +evs.filter(e=>e.type==='tackle').length*1;
+    const score=evs.filter(function(e){return e.type==='goal';}).length*3
+      +evs.filter(function(e){return e.type==='assist';}).length*2
+      +evs.filter(function(e){return e.type==='save';}).length*2
+      +evs.filter(function(e){return e.type==='dribble';}).length*1
+      +evs.filter(function(e){return e.type==='tackle';}).length*1;
     if(score>bestScore){bestScore=score;best=p;}
   });
   return{player:best,score:bestScore};
@@ -1831,8 +1987,9 @@ function updateLineups(){
         <span class="lu-num">${p.num}</span>
         <span class="pos-badge pos-${p.pos}">${p.pos}</span>
         <span class="lu-name">${p.name}</span>
+        <span class="rank-badge sm rank-${p.rank}" style="pointer-events:none;flex-shrink:0;">${p.rank}</span>
         <span class="lu-events">${goals?'⚽'.repeat(goals):''}${yellows?'🟨'.repeat(Math.min(yellows,1)):''}${hasRed?'🟥':''}</span>
-        <span style="width:28px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;">
+        <span style="width:24px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;">
           <span style="display:block;height:100%;width:${Math.round(stam)}%;background:${stamColor};border-radius:2px;transition:width .5s;"></span>
         </span>
       </div>`;
@@ -1906,8 +2063,8 @@ function openSubModal(side){
   $('sub-modal-team').textContent=side==='home'?M.home.name:M.away.name;
   const team=side==='home'?M.home:M.away;
   const outList=$('sub-out-list');const inList=$('sub-in-list');
-  // OUT: titulares ativos, exceto GOL, exceto os que já foram substituídos (subIn=true = já entrou como reserva)
-  const eligible=team.players.starters.filter(function(p){return p.active&&p.pos!=='GOL';});
+  // OUT: titulares ativos, exceto GOL, exceto quem entrou como reserva (não pode sair de novo)
+  const eligible=team.players.starters.filter(function(p){return p.active&&p.pos!=='GOL'&&!p.subIn;});
   outList.innerHTML='';
   eligible.forEach(function(p){
     const stam=p.stamina!==undefined?Math.round(p.stamina):100;
@@ -1981,17 +2138,26 @@ function confirmSub(){
   const inn=team.players.reserves.find(p=>p.id===subInSel);
   if(!out||!inn)return;
   if(M.subs[side]<=0){toast('Sem substituições!','⚠️');return;}
-  out.active=false;out.subIn=true;
-  // Apply optional position change
+  // Remove out from starters and mark as inactive permanently
+  out.active=false;
+  out.subIn=false; // was starter, now gone
+  out._subOut=true; // permanently benched
+  // Apply optional position change to incoming player
   if(subNewPos) inn.pos=subNewPos;
-  inn.active=true;inn.subIn=true;
+  inn.active=true;
+  inn.subIn=true; // entered as sub — cannot be subbed out later
+  inn._subOut=false;
+  // Replace in starters array
   const idx=team.players.starters.indexOf(out);
-  team.players.starters[idx]=inn;
+  if(idx>=0) team.players.starters[idx]=inn;
+  // Remove inn from reserves so they can't be selected again
+  const rIdx=team.players.reserves.indexOf(inn);
+  if(rIdx>=0) team.players.reserves.splice(rIdx,1);
   M.subs[side]--;
   const min=M.minute||0;
   const posNote=subNewPos?' (jogando como '+subNewPos+')':'';
-  addFeedEvent({min,type:'sub',icon:'🔄',text:'<b>Substituição '+(side==='home'?M.home.name:M.away.name)+':</b> Sai '+out.name+', Entra '+inn.name+posNote});
-  toast(inn.name+' entrou'+posNote+'!','🔄');
+  addFeedEvent({min,type:'sub',icon:'🔄',text:'<b>Sub '+(side==='home'?M.home.name:M.away.name)+':</b> Sai <b>'+out.name+'</b>, Entra <b>'+inn.name+'</b>'+posNote});
+  toast(inn.name+' entrou!','🔄');
   subNewPos=null;
   updateLineups();closeModal('sub-modal');
   fbPushMatchState();
@@ -2348,7 +2514,7 @@ function fbPushMatchState(){
     tactics:M.tactics,
     stats:M.stats,
     homeName:M.home.name,awayName:M.away.name,
-    homeLogo:M.home.logo||null,awayLogo:M.away.logo||null,
+    homeLogo:M.home.logo?'has_logo':null,awayLogo:M.away.logo?'has_logo':null,
     homeStarters:M.home.players.starters.map(p=>({id:p.id,num:p.num,name:p.name,pos:p.pos,rank:p.rank,active:p.active,subIn:p.subIn,stamina:p.stamina||100,events:p.events||[]})),
     awayStarters:M.away.players.starters.map(p=>({id:p.id,num:p.num,name:p.name,pos:p.pos,rank:p.rank,active:p.active,subIn:p.subIn,stamina:p.stamina||100,events:p.events||[]})),
     homeReserves:M.home.players.reserves.map(p=>({id:p.id,num:p.num,name:p.name,pos:p.pos,rank:p.rank,active:p.active,subIn:p.subIn,stamina:p.stamina||100,events:p.events||[]})),
@@ -2535,9 +2701,9 @@ function applyRemoteMatchState(data){
     STATE.match.stats=data.stats;
     STATE.match.events=STATE.match.events||[];
     STATE.match.phase=data.phase||'pre';
-    STATE.match.home={name:data.homeName,logo:data.homeLogo,
+    STATE.match.home={name:data.homeName,logo:null,
       players:{starters:data.homeStarters||[],reserves:data.homeReserves||[]}};
-    STATE.match.away={name:data.awayName,logo:data.awayLogo,
+    STATE.match.away={name:data.awayName,logo:null,
       players:{starters:data.awayStarters||[],reserves:data.awayReserves||[]}};
     matchRuntime.phase=data.phase||'pre';
     matchRuntime.minute=data.minute||0;
