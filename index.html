@@ -1393,7 +1393,6 @@ function generateEvents(){
           'DRIBLE DE COSTAS! <b>'+p.name+'</b> girou e <b>'+def.name+'</b> abraçou o vento!',
           '<b>'+p.name+'</b> levantou a bola com o bico do pé — LAMBRETA em <b>'+def.name+'</b>!',
           'Que habilidade! <b>'+p.name+'</b> passou entre as pernas de <b>'+def.name+'</b> e continuou!',
-        ,
           'SOMBRERO! <b>'+p.name+'</b> levantou a bola por cima de <b>'+def.name+'</b>!',
           'FLIP FLAP! <b>'+p.name+'</b> elastico duplo e <b>'+def.name+'</b> ficou rodando!',
           '<b>'+p.name+'</b> parou com o peito e ja saiu driblando <b>'+def.name+'</b>!',
@@ -2662,6 +2661,7 @@ function applyRemoteMatchState(data){
       return`<div class="lu-player ${!p.active&&hasRed?'expelled':''}">
         <span class="lu-num">${p.num}</span><span class="pos-badge pos-${p.pos}">${p.pos}</span>
         <span class="lu-name">${p.name}</span>
+        <span class="rank-badge sm rank-${p.rank}" style="pointer-events:none;flex-shrink:0;">${p.rank}</span>
         <span class="lu-events">${goals?'⚽'.repeat(Math.min(goals,3)):''}${hasRed?'🟥':''}</span>
         <span style="width:24px;height:4px;background:var(--black3);border-radius:2px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${Math.round(stam)}%;background:${sc};"></span></span>
       </div>`;
